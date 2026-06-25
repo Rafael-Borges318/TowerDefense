@@ -9,19 +9,19 @@ interface Point { x: number; y: number }
 interface HordeDef { enemies: { type: EnemyType; count: number }[]; interval: number; bonus: number }
 
 function generateHordes(phase: number): HordeDef[] {
-  const count = 2 + phase
+  const count = 10
   const hordes: HordeDef[] = []
 
   for (let h = 0; h < count; h++) {
     const hNum = h + 1
     const enemies: { type: EnemyType; count: number }[] = [
-      { type: 'goblin', count: 4 + phase + hNum * 2 }
+      { type: 'goblin', count: 12 + phase * 2 + hNum * 5 }
     ]
     if (hNum >= 2 || phase >= 2) {
-      enemies.push({ type: 'troll', count: Math.max(1, Math.floor(phase * 1.2 + hNum * 0.7)) })
+      enemies.push({ type: 'troll', count: Math.max(2, Math.floor(phase * 2.5 + hNum * 1.6)) })
     }
     if (hNum >= 3 || phase >= 3) {
-      enemies.push({ type: 'shaman', count: Math.max(1, Math.floor(phase * 0.7 + hNum * 0.4)) })
+      enemies.push({ type: 'shaman', count: Math.max(1, Math.floor(phase * 1.5 + hNum * 0.9)) })
     }
     hordes.push({
       enemies,
@@ -44,6 +44,7 @@ export class WaveManager {
   private activeCount: number = 0
   private isSpawning: boolean = false
   private aliveEnemies: Enemy[] = []
+  private hordeCompleting: boolean = false
 
   constructor(scene: Phaser.Scene, waypoints: Point[], phase: number) {
     this.scene = scene
@@ -58,7 +59,8 @@ export class WaveManager {
   private onEnemyRemoved() {
     this.activeCount = Math.max(0, this.activeCount - 1)
     this.aliveEnemies = this.aliveEnemies.filter(e => e.active)
-    if (this.activeCount === 0 && !this.isSpawning && this.currentHorde > 0) {
+    if (this.activeCount === 0 && !this.isSpawning && this.currentHorde > 0 && !this.hordeCompleting) {
+      this.hordeCompleting = true
       this.onHordeComplete()
     }
   }
@@ -89,6 +91,7 @@ export class WaveManager {
     Phaser.Utils.Array.Shuffle(this.spawnQueue)
 
     this.activeCount = this.spawnQueue.length
+    this.hordeCompleting = false
     this.isSpawning = true
 
     this.spawnTimer = this.scene.time.addEvent({

@@ -39,10 +39,10 @@ const WAYPOINTS_P1: Point[] = [
 ]
 
 const SLOT_POSITIONS_P1: Point[] = [
-  { x: 200, y: 165 },  // bolsão entre trechos horizontais topo/entrada
-  { x: 575, y: 270 },  // área direita, altura média
-  { x: 740, y: 270 },  // extremo direito, meio
-  { x: 230, y: 490 },  // área baixo, depois do horizontal final
+  { x: 220, y: 180 },  // bolsão entre trechos horizontais topo/entrada
+  { x: 460, y: 245 },  // área direita, altura média
+  { x: 460, y: 465 },  // extremo direito, meio
+  { x: 215, y: 380 },  // área baixo, depois do horizontal final
 ]
 
 // ── Fases 2+ — mapa procedural ──
@@ -93,7 +93,7 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('orc_hurt',  'assets/orc_hurt.png',  { frameWidth: 100, frameHeight: 100 })
     this.load.spritesheet('orc_death', 'assets/orc_death.png', { frameWidth: 100, frameHeight: 100 })
     this.load.image('arrow',     'assets/arrow.png')
-    this.load.image('map_fase1', 'assets/fase1.png')
+    this.load.image('map_fase1', 'assets/fase1pixel.png')
   }
 
   private createAnimations() {

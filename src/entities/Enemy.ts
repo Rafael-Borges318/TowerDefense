@@ -8,9 +8,9 @@ export type EnemyType = 'goblin' | 'troll' | 'shaman'
 interface Point { x: number; y: number }
 
 const SPRITE_CFG: Record<EnemyType, { scale: number; tint?: number }> = {
-  goblin: { scale: 0.95 },
-  troll:  { scale: 1.5,  tint: 0xddaaff },
-  shaman: { scale: 1.15, tint: 0xffcc88 },
+  goblin: { scale: 1.6 },
+  troll:  { scale: 2.3,  tint: 0xddaaff },
+  shaman: { scale: 1.9, tint: 0xffcc88 },
 }
 
 export class Enemy extends Phaser.GameObjects.GameObject {
@@ -78,15 +78,15 @@ export class Enemy extends Phaser.GameObjects.GameObject {
   }
 
   private drawHealthBar() {
-    const w = Math.max(22, this.sprite.displayWidth)
+    const w = 34
     const bx = this.x - w / 2
-    const by = this.y - this.sprite.displayHeight / 2 - 7
+    const by = this.y - this.sprite.displayHeight / 2 + 26
     const ratio = Math.max(0, this.health / this.maxHealth)
     this.healthBar.clear()
     this.healthBar.fillStyle(0x440000)
-    this.healthBar.fillRect(bx, by, w, 4)
+    this.healthBar.fillRect(bx, by, w, 3)
     this.healthBar.fillStyle(0x00ff44)
-    this.healthBar.fillRect(bx, by, w * ratio, 4)
+    this.healthBar.fillRect(bx, by, w * ratio, 3)
   }
 
   preUpdate(time: number, delta: number) {

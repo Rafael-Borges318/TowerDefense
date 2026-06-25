@@ -6,7 +6,7 @@ export class MenuScene extends Phaser.Scene {
   constructor() { super('MenuScene') }
 
   preload() {
-    this.load.image('telaInicial', '/assets/telaInicial.png')
+    this.load.image('telaInicial', '/assets/telaInicialPixel.jpeg')
   }
 
   create() {

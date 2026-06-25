@@ -1,6 +1,6 @@
 {
   "goblin": {
-    "health": 60,
+    "health": 80,
     "speed": 130,
     "reward": 8,
     "physicalResist": 0,
@@ -10,7 +10,7 @@
     "outlineColor": "0x116622"
   },
   "troll": {
-    "health": 160,
+    "health": 210,
     "speed": 55,
     "reward": 30,
     "physicalResist": 25,
@@ -20,7 +20,7 @@
     "outlineColor": "0x888888"
   },
   "shaman": {
-    "health": 120,
+    "health": 160,
     "speed": 80,
     "reward": 20,
     "physicalResist": 0,
