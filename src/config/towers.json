@@ -1,0 +1,71 @@
+{
+  "archer": {
+    "damageType": "physical",
+    "levels": [
+      {
+        "level": 1, "damage": 15, "range": 130, "fireRate": 1000,
+        "cost": 50, "upgradeCost": 60,
+        "bodyColor": "0x8B4513", "accentColor": "0xD2691E", "width": 28, "height": 32,
+        "label": "Arqueiro I"
+      },
+      {
+        "level": 2, "damage": 28, "range": 155, "fireRate": 800,
+        "cost": 0, "upgradeCost": 100,
+        "bodyColor": "0x696969", "accentColor": "0xC0C0C0", "width": 32, "height": 36,
+        "label": "Arqueiro II"
+      },
+      {
+        "level": 3, "damage": 35, "range": 170, "fireRate": 700,
+        "cost": 0, "upgradeCost": 0,
+        "bodyColor": "0x228B22", "accentColor": "0xFFD700", "width": 36, "height": 40,
+        "label": "Arqueiro III", "special": "triple_shot"
+      }
+    ]
+  },
+  "mage": {
+    "damageType": "magic",
+    "levels": [
+      {
+        "level": 1, "damage": 20, "range": 110, "fireRate": 1400,
+        "cost": 75, "upgradeCost": 80,
+        "bodyColor": "0x800080", "accentColor": "0xDA70D6", "width": 28, "height": 34,
+        "label": "Mago I"
+      },
+      {
+        "level": 2, "damage": 38, "range": 135, "fireRate": 1100,
+        "cost": 0, "upgradeCost": 120,
+        "bodyColor": "0x0000CD", "accentColor": "0x6495ED", "width": 32, "height": 38,
+        "label": "Mago II"
+      },
+      {
+        "level": 3, "damage": 55, "range": 155, "fireRate": 900,
+        "cost": 0, "upgradeCost": 0,
+        "bodyColor": "0x008B8B", "accentColor": "0x00FFFF", "width": 36, "height": 42,
+        "label": "Mago III", "special": "slow", "slowDuration": 2000
+      }
+    ]
+  },
+  "mortar": {
+    "damageType": "physical",
+    "levels": [
+      {
+        "level": 1, "damage": 30, "range": 160, "fireRate": 2200,
+        "cost": 100, "upgradeCost": 100,
+        "bodyColor": "0x404040", "accentColor": "0x808080", "width": 34, "height": 30,
+        "label": "Morteiro I"
+      },
+      {
+        "level": 2, "damage": 55, "range": 180, "fireRate": 1800,
+        "cost": 0, "upgradeCost": 150,
+        "bodyColor": "0x000080", "accentColor": "0x4169E1", "width": 38, "height": 34,
+        "label": "Morteiro II"
+      },
+      {
+        "level": 3, "damage": 80, "range": 200, "fireRate": 1400,
+        "cost": 0, "upgradeCost": 0,
+        "bodyColor": "0x8B0000", "accentColor": "0xFF4500", "width": 42, "height": 38,
+        "label": "Morteiro III", "special": "aoe", "aoeRadius": 65
+      }
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "tower-defense",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.80.1",
+    "@supabase/supabase-js": "^2.39.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12"
+  }
+}

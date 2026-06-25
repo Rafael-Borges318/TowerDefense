@@ -1,0 +1,241 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tower Defense</title>
+    <link rel="icon" href="data:,">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a1e; }
+
+      /* Phaser */
+      #game-container { position: fixed; inset: 0; }
+      canvas { display: block; image-rendering: auto; }
+
+      /* Overlay inicial */
+      #inicial {
+        position: fixed; inset: 0; z-index: 200;
+        background: linear-gradient(160deg, #050510 0%, #08081a 55%, #0f0f28 100%);
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+      }
+
+      /* estrelas */
+      #star-bg { position: absolute; inset: 0; overflow: hidden; }
+      .star {
+        position: absolute; border-radius: 50%; background: #fff;
+        animation: twinkle var(--d,2s) ease-in-out infinite alternate;
+      }
+      @keyframes twinkle { from{opacity:.05} to{opacity:var(--op,.55)} }
+
+      /* castelo */
+      #castle-deco {
+        position: absolute; bottom:-10px; left:50%;
+        transform: translateX(-50%);
+        font-size: 260px; line-height:1;
+        opacity:.055; pointer-events:none; user-select:none; filter:blur(1px);
+      }
+
+      /* titulo */
+      #ini-content { position:relative; z-index:1; text-align:center; }
+      .ini-sword  { font-size:68px; margin-bottom:4px; }
+      .ini-title  {
+        font-size:54px; font-weight:900; color:#ffcc00;
+        text-shadow:0 0 40px rgba(255,200,0,.45),0 3px 10px rgba(0,0,0,.9);
+        letter-spacing:5px; line-height:1;
+      }
+      .ini-sub { margin-top:10px; font-size:14px; color:#5a6a99; letter-spacing:1.5px; }
+      #ini-progress { margin-top:18px; font-size:13px; color:#ffeeaa; min-height:20px; }
+
+      /* botoes */
+      #ini-btns { margin-top:46px; display:flex; flex-direction:column; gap:14px; align-items:center; }
+      .ini-btn {
+        font-size:20px; font-weight:700; letter-spacing:2px;
+        padding:13px 56px; border-radius:8px; border:2px solid transparent;
+        cursor:pointer; transition:all .18s ease; min-width:240px;
+        background:none; color:inherit;
+      }
+      .btn-play { background:rgba(16,46,16,.92); color:#88ff88; border-color:rgba(70,170,70,.3); }
+      .btn-play:hover { background:rgba(26,70,26,.97); border-color:rgba(110,230,110,.55); transform:scale(1.04); box-shadow:0 0 28px rgba(70,220,70,.22); }
+      .btn-sm   { font-size:16px; padding:10px 40px; min-width:200px; background:rgba(14,14,36,.85); color:#8888cc; border-color:rgba(80,80,160,.3); }
+      .btn-sm:hover { background:rgba(24,24,60,.95); border-color:rgba(120,120,200,.55); transform:scale(1.03); }
+      .btn-upg  { font-size:16px; padding:10px 40px; min-width:200px; background:rgba(18,10,30,.85); color:#cc88ff; border-color:rgba(120,60,180,.3); }
+      .btn-upg:hover { background:rgba(30,16,50,.95); border-color:rgba(160,100,220,.55); transform:scale(1.03); }
+
+      /* rodape + Codex */
+      #ini-footer { position:absolute; bottom:16px; font-size:11px; color:#252d3e; }
+      #btn-codex  {
+        position:absolute; bottom:10px; right:10px;
+        font-size:15px; color:#ddc880; background:#111828;
+        border:none; border-radius:6px; padding:6px 12px;
+        cursor:pointer; transition:opacity .15s;
+      }
+      #btn-codex:hover { opacity:.75; }
+
+      /* Modal Codex */
+      #codex-overlay {
+        display:none; position:fixed; inset:0; z-index:300;
+        background:rgba(0,0,0,.88);
+        align-items:center; justify-content:center;
+      }
+      #codex-overlay.open { display:flex; }
+      #codex-panel {
+        background:#080f20; border:2px solid #4a6aaa; border-radius:12px;
+        width:520px; padding:22px 24px; position:relative;
+      }
+      #codex-panel h2 { text-align:center; color:#ddc880; font-size:17px; margin-bottom:14px; }
+      .codex-tabs { display:flex; gap:10px; margin-bottom:14px; }
+      .ctab {
+        flex:1; padding:7px; border-radius:5px; border:none; cursor:pointer;
+        font-size:13px; font-weight:600; transition:background .15s;
+      }
+      .ctab.active { background:#2a3f6a; color:#fff; border:1px solid #4a6aaa; }
+      .ctab:not(.active) { background:#111828; color:#667799; }
+      .codex-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+      .codex-card { background:rgba(255,255,255,.03); border-radius:8px; padding:12px; }
+      .codex-card h3 { font-size:14px; margin-bottom:6px; }
+      .codex-card p  { font-size:11px; color:#99aacc; line-height:1.6; }
+      #codex-close {
+        position:absolute; top:10px; right:14px;
+        color:#ff6666; background:none; border:none; font-size:16px; cursor:pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Overlay HTML inicial -->
+    <div id="inicial">
+      <div id="star-bg"></div>
+      <div id="castle-deco">&#127968;</div>
+
+      <div id="ini-content">
+        <div class="ini-sword">&#9876;&#65039;</div>
+        <div class="ini-title">TOWER DEFENSE</div>
+        <div class="ini-sub">Defend your castle &mdash; survive every wave</div>
+        <div id="ini-progress"></div>
+        <div id="ini-btns">
+          <button class="ini-btn btn-play" id="btn-jogar">&#9654;&nbsp; JOGAR</button>
+          <button class="ini-btn btn-sm"   id="btn-nova"  style="display:none">&#128260; Nova Partida (Fase 1)</button>
+          <button class="ini-btn btn-upg"  id="btn-melhorias">&#128295; Melhorias</button>
+        </div>
+      </div>
+
+      <div id="ini-footer">Phaser 3 + TypeScript + Vite</div>
+      <button id="btn-codex">&#128214; Codex</button>
+    </div>
+
+    <!-- Modal Codex -->
+    <div id="codex-overlay">
+      <div id="codex-panel">
+        <button id="codex-close">&#10005;</button>
+        <h2>&#128214; Codex &mdash; Guia do Jogo</h2>
+        <div class="codex-tabs">
+          <button class="ctab active" id="tab-enemies">&#9876; Inimigos</button>
+          <button class="ctab"        id="tab-towers" >&#127985; Torres</button>
+        </div>
+        <div class="codex-grid" id="codex-content"></div>
+      </div>
+    </div>
+
+    <!-- Jogo Phaser -->
+    <div id="game-container"></div>
+    <script type="module" src="/src/main.ts"></script>
+
+    <script>
+      (function(){
+        var bg=document.getElementById('star-bg');
+        for(var i=0;i<90;i++){
+          var s=document.createElement('div'); s.className='star';
+          var sz=(Math.random()*2+.5).toFixed(1);
+          var op=(Math.random()*.5+.12).toFixed(2);
+          var d=(Math.random()*3+1).toFixed(1);
+          s.style.cssText='width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)+'%;--op:'+op+';--d:'+d+'s';
+          bg.appendChild(s);
+        }
+      })();
+
+      function refreshProgress(){
+        try{
+          var d=JSON.parse(localStorage.getItem('td_progress')||'{}');
+          var phase=d.currentPhase||1, stars=d.totalStars||0;
+          document.getElementById('ini-progress').textContent='Fase atual: '+phase+'  |  &#11088; '+stars+' estrelas';
+          document.getElementById('btn-nova').style.display=phase>1?'block':'none';
+        }catch(e){}
+      }
+      refreshProgress();
+
+      function showInicial(){
+        refreshProgress();
+        var el=document.getElementById('inicial');
+        el.style.transition='opacity .4s ease-in';
+        el.style.pointerEvents='';
+        el.style.opacity='1';
+      }
+      function hideInicial(){
+        var el=document.getElementById('inicial');
+        el.style.transition='opacity .55s ease-out';
+        el.style.pointerEvents='none';
+        el.style.opacity='0';
+      }
+      function getPhase(){
+        try{return JSON.parse(localStorage.getItem('td_progress')||'{}').currentPhase||1;}catch(e){return 1;}
+      }
+
+      document.getElementById('btn-jogar').addEventListener('click',function(){
+        window.tdAction('game', getPhase());
+        hideInicial();
+      });
+      document.getElementById('btn-nova').addEventListener('click',function(){
+        try{var d=JSON.parse(localStorage.getItem('td_progress')||'{}');d.currentPhase=1;localStorage.setItem('td_progress',JSON.stringify(d));}catch(e){}
+        window.tdAction('game', 1);
+        hideInicial();
+      });
+      document.getElementById('btn-melhorias').addEventListener('click',function(){
+        window.tdAction('upgrade', getPhase());
+        hideInicial();
+      });
+
+      window.addEventListener('td-show-menu', showInicial);
+
+      var codexData = {
+        enemies: [
+          { name:'Goblin',  color:'#33ee77', lines:['HP: 60  |  Vel: rapida','Sem resistencias','Recompensa: 8 ouro','Estrategia: qualquer torre'] },
+          { name:'Troll',   color:'#bb88ff', lines:['HP: 160  |  Vel: lenta','Resist. fisica: 25%','Recompensa: 30 ouro','Estrategia: use o Mago'] },
+          { name:'Xama',    color:'#ffbb44', lines:['HP: 120  |  Vel: media','Resist. magica: 65%','Amaldico torres proximas','Recompensa: 20 ouro'] }
+        ],
+        towers: [
+          { name:'Arqueiro', color:'#D2691E', lines:['Dano: fisico  |  Alcance: 130px','Dispara flechas numa unidade','Nv3: tiro triplo (3 alvos)','Custo base: 80 ouro'] },
+          { name:'Mago',     color:'#cc88ff', lines:['Dano: magico  |  Alcance: 120px','Ignora resist. fisica','Nv3: lentidao nas vitimas','Custo base: 110 ouro'] },
+          { name:'Morteiro', color:'#aaaaaa', lines:['Dano: fisico AoE  |  Alcance: 150px','Atinge multiplos inimigos','Nv3: explosao em grande area','Custo base: 130 ouro'] }
+        ]
+      };
+
+      function renderCodex(tab){
+        var grid=document.getElementById('codex-content');
+        var items=codexData[tab];
+        grid.innerHTML='';
+        items.forEach(function(item){
+          var card=document.createElement('div'); card.className='codex-card';
+          card.innerHTML='<h3 style="color:'+item.color+'">'+item.name+'</h3><p>'+item.lines.join('<br>')+'</p>';
+          grid.appendChild(card);
+        });
+        document.getElementById('tab-enemies').className='ctab'+(tab==='enemies'?' active':'');
+        document.getElementById('tab-towers').className='ctab'+(tab==='towers'?' active':'');
+      }
+
+      document.getElementById('btn-codex').addEventListener('click',function(){
+        document.getElementById('codex-overlay').classList.add('open');
+        renderCodex('enemies');
+      });
+      document.getElementById('codex-close').addEventListener('click',function(){
+        document.getElementById('codex-overlay').classList.remove('open');
+      });
+      document.getElementById('codex-overlay').addEventListener('click',function(e){
+        if(e.target===this) this.classList.remove('open');
+      });
+      document.getElementById('tab-enemies').addEventListener('click',function(){ renderCodex('enemies'); });
+      document.getElementById('tab-towers').addEventListener('click',function(){ renderCodex('towers'); });
+    </script>
+  </body>
+</html>

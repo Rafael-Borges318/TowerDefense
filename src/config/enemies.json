@@ -1,0 +1,35 @@
+{
+  "goblin": {
+    "health": 60,
+    "speed": 130,
+    "reward": 8,
+    "physicalResist": 0,
+    "magicResist": 0,
+    "radius": 10,
+    "bodyColor": "0x22cc44",
+    "outlineColor": "0x116622"
+  },
+  "troll": {
+    "health": 160,
+    "speed": 55,
+    "reward": 30,
+    "physicalResist": 25,
+    "magicResist": 0,
+    "radius": 22,
+    "bodyColor": "0x6633aa",
+    "outlineColor": "0x888888"
+  },
+  "shaman": {
+    "health": 120,
+    "speed": 80,
+    "reward": 20,
+    "physicalResist": 0,
+    "magicResist": 65,
+    "radius": 14,
+    "bodyColor": "0xcc8822",
+    "outlineColor": "0xffee00",
+    "curseInterval": 3500,
+    "curseDuration": 2000,
+    "curseRange": 130
+  }
+}

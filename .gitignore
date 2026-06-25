@@ -1,0 +1,20 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+
+# Variáveis de ambiente (contém credenciais)
+.env
+.env.local
+.env.*.local
+
+# Cache do Vite
+.vite/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Sistemas operacionais
+.DS_Store
+Thumbs.db
