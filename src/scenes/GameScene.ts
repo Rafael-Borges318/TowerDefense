@@ -135,6 +135,7 @@ export class GameScene extends Phaser.Scene {
     EventBus.on(Events.SHAMAN_CURSE,      this.onShamanCurse, this)
 
     this.input.on('pointerdown', this.onSceneClick, this)
+    this.input.keyboard!.on('keydown-ESC', this.openPause, this)
     this.createCodexButton()
     this.refreshHUD()
   }
@@ -361,12 +362,12 @@ export class GameScene extends Phaser.Scene {
     g.fillStyle(0x000000, 0.75)
     g.fillRect(0, 0, 800, 44)
 
-    this.hudPhase = this.add.text(10, 12, '', { fontSize: '14px', color: '#ffaa44' })
-    this.hudGold  = this.add.text(130, 12, '', { fontSize: '14px', color: '#ffcc00' })
-    this.hudLives = this.add.text(270, 12, '', { fontSize: '14px', color: '#ff6666' })
-    this.hudWave  = this.add.text(400, 12, '', { fontSize: '14px', color: '#66ccff' })
+    this.hudPhase = this.add.text(10,  12, '', { fontSize: '14px', color: '#ffaa44' })
+    this.hudGold  = this.add.text(70,  12, '', { fontSize: '14px', color: '#ffcc00' })
+    this.hudLives = this.add.text(150, 12, '', { fontSize: '14px', color: '#ff6666' })
+    this.hudWave  = this.add.text(250, 12, '', { fontSize: '14px', color: '#66ccff' })
 
-    this.hordeBtn = this.add.text(545, 8, '[ ▶ Iniciar Horda ]', {
+    this.hordeBtn = this.add.text(490, 8, '[ ▶ Iniciar Horda ]', {
       fontSize: '14px', color: '#ffffff',
       backgroundColor: '#225522', padding: { x: 8, y: 5 }
     }).setInteractive({ cursor: 'pointer' })
@@ -374,9 +375,17 @@ export class GameScene extends Phaser.Scene {
     this.hordeBtn.on('pointerover', () => this.hordeBtn.setAlpha(0.8))
     this.hordeBtn.on('pointerout',  () => this.hordeBtn.setAlpha(1))
 
-    const menuBtn = this.add.text(742, 8, '🏠 Menu', {
+    const pauseBtn = this.add.text(690, 8, '⏸', {
+      fontSize: '16px', color: '#aaccff',
+      backgroundColor: '#112244', padding: { x: 8, y: 5 }
+    }).setInteractive({ cursor: 'pointer' })
+    pauseBtn.on('pointerover', () => pauseBtn.setAlpha(0.8))
+    pauseBtn.on('pointerout',  () => pauseBtn.setAlpha(1))
+    pauseBtn.on('pointerdown', () => this.openPause())
+
+    const menuBtn = this.add.text(730, 8, 'Menu', {
       fontSize: '13px', color: '#ccbbff',
-      backgroundColor: '#221133', padding: { x: 7, y: 5 }
+      backgroundColor: '#221133', padding: { x: 8, y: 5 }
     }).setInteractive({ cursor: 'pointer' })
     menuBtn.on('pointerover', () => menuBtn.setAlpha(0.8))
     menuBtn.on('pointerout',  () => menuBtn.setAlpha(1))
@@ -810,6 +819,12 @@ export class GameScene extends Phaser.Scene {
       backgroundColor: '#00000088', padding: { x: 14, y: 8 }
     }).setOrigin(0.5).setDepth(100)
     this.time.delayedCall(2200, () => msg.destroy())
+  }
+
+  private openPause() {
+    if (GameManager.getInstance().isGameOver()) return
+    this.scene.launch('PauseScene')
+    this.scene.pause()
   }
 
   getEnemies(): EnemyLike[] {

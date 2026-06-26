@@ -21,7 +21,7 @@ const DEFAULT: ProgressData = {
 }
 
 const UPGRADE_MAX_LEVEL = 3
-const UPGRADE_COST_PER_LEVEL = 2
+const UPGRADE_COST_PER_LEVEL = 1
 
 export class ProgressManager {
   private static _instance: ProgressManager | null = null

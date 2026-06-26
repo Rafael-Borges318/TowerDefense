@@ -41,13 +41,14 @@ export class Enemy extends Phaser.GameObjects.GameObject {
   private curseDuration: number = 0
   private curseRange: number = 0
 
-  constructor(scene: Phaser.Scene, type: EnemyType, waypoints: Point[]) {
+  constructor(scene: Phaser.Scene, type: EnemyType, waypoints: Point[], healthMultiplier: number = 1) {
     super(scene, 'Enemy')
     this.enemyType = type
     const cfg = enemiesConfig[type] as any
 
-    this.health    = cfg.health
-    this.maxHealth = cfg.health
+    const scaledHealth = Math.round(cfg.health * healthMultiplier)
+    this.health    = scaledHealth
+    this.maxHealth = scaledHealth
     this.speed     = cfg.speed
     this.physicalResist = cfg.physicalResist
     this.magicResist    = cfg.magicResist

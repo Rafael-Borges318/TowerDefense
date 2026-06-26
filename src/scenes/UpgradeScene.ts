@@ -55,7 +55,7 @@ export class UpgradeScene extends Phaser.Scene {
       fontSize: '16px', color: '#ffeeaa'
     }).setOrigin(0.5)
 
-    this.add.text(400, 90, `Cada upgrade custa 2 estrelas   •   Máximo nível 3`, {
+    this.add.text(400, 90, `Cada upgrade custa 1 estrela   •   Máximo nível 3`, {
       fontSize: '12px', color: '#888899'
     }).setOrigin(0.5)
 

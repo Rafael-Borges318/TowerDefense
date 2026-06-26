@@ -40,7 +40,7 @@ export class Projectile extends Phaser.GameObjects.GameObject {
     this.aoeRadius    = options.aoeRadius ?? 0
 
     if (options.useArrow && this.aoeRadius === 0 && scene.textures.exists('arrow')) {
-      this.arrowImage = scene.add.image(x, y, 'arrow').setScale(0.28).setDepth(13)
+      this.arrowImage = scene.add.image(x, y, 'arrow').setScale(0.5).setDepth(13)
       const angle = Math.atan2(target.y - y, target.x - x)
       this.arrowImage.setRotation(angle)
     } else {

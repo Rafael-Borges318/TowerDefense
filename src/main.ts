@@ -3,6 +3,7 @@ import { MenuScene } from './scenes/MenuScene'
 import { GameScene } from './scenes/GameScene'
 import { GameOverScene } from './scenes/GameOverScene'
 import { UpgradeScene } from './scenes/UpgradeScene'
+import { PauseScene } from './scenes/PauseScene'
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -17,7 +18,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: 800,
     height: 560,
   },
-  scene: [MenuScene, GameScene, GameOverScene, UpgradeScene],
+  scene: [MenuScene, GameScene, PauseScene, GameOverScene, UpgradeScene],
 }
 
 new Phaser.Game(config)
