@@ -12,11 +12,7 @@ const HORDES_PER_PHASE = 5
 const HEALTH_SCALE_PER_HORDE = 0.05
 
 function generateHordes(phase: number): HordeDef[] {
-<<<<<<< HEAD
-  const count = 10
-=======
   const count = HORDES_PER_PHASE
->>>>>>> df5c28c1a38f3b55f3c03d1db9484ad774e698b4
   const hordes: HordeDef[] = []
 
   for (let h = 0; h < count; h++) {
@@ -28,21 +24,11 @@ function generateHordes(phase: number): HordeDef[] {
     const goblinCount = 6 + (phase - 1) * 3 + hNum * 2
 
     const enemies: { type: EnemyType; count: number }[] = [
-<<<<<<< HEAD
-      { type: 'goblin', count: 12 + phase * 2 + hNum * 5 }
-=======
       { type: 'goblin', count: goblinCount }
->>>>>>> df5c28c1a38f3b55f3c03d1db9484ad774e698b4
     ]
 
     // Trolls appear from horde 2 onward (or phase 2+).
     if (hNum >= 2 || phase >= 2) {
-<<<<<<< HEAD
-      enemies.push({ type: 'troll', count: Math.max(2, Math.floor(phase * 2.5 + hNum * 1.6)) })
-    }
-    if (hNum >= 3 || phase >= 3) {
-      enemies.push({ type: 'shaman', count: Math.max(1, Math.floor(phase * 1.5 + hNum * 0.9)) })
-=======
       const trollCount = Math.max(1, Math.floor((phase - 1) * 1.5 + hNum * 0.8))
       enemies.push({ type: 'troll', count: trollCount })
     }
@@ -51,7 +37,6 @@ function generateHordes(phase: number): HordeDef[] {
     if (hNum >= 4 || phase >= 3) {
       const shamanCount = Math.max(1, Math.floor((phase - 1) * 0.8 + (hNum - 3) * 0.7))
       enemies.push({ type: 'shaman', count: shamanCount })
->>>>>>> df5c28c1a38f3b55f3c03d1db9484ad774e698b4
     }
 
     hordes.push({

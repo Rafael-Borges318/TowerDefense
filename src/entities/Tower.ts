@@ -25,6 +25,8 @@ export class Tower extends Phaser.GameObjects.GameObject {
   private graphics: Phaser.GameObjects.Graphics
   private rangeGraphics: Phaser.GameObjects.Graphics
   private disruptGraphics: Phaser.GameObjects.Graphics
+  private archerImage: Phaser.GameObjects.Image | null = null
+  private slowZone: { graphics: Phaser.GameObjects.Graphics; x: number; y: number; radius: number; until: number } | null = null
   private lastFiredAt: number = 0
   private disruptedUntil: number = 0
   private investedGold: number = 0
@@ -43,6 +45,11 @@ export class Tower extends Phaser.GameObjects.GameObject {
     this.disruptGraphics = scene.add.graphics()
     this.rangeGraphics = scene.add.graphics()
     this.graphics = scene.add.graphics()
+
+    if (this.type === 'archer' && scene.textures.exists('torre_arqueiro')) {
+      this.archerImage = scene.add.image(x, y, 'torre_arqueiro').setDisplaySize(64, 64).setDepth(10)
+    }
+
     this.draw()
     scene.sys.updateList.add(this)
   }
@@ -77,15 +84,19 @@ export class Tower extends Phaser.GameObjects.GameObject {
 
     this.graphics.clear()
 
-    // base body
-    this.graphics.fillStyle(body)
-    this.graphics.fillRect(bx, by, cfg.width, cfg.height)
-    this.graphics.lineStyle(2, accent, 1)
-    this.graphics.strokeRect(bx, by, cfg.width, cfg.height)
+    if (!this.archerImage) {
+      this.graphics.fillStyle(body)
+      this.graphics.fillRect(bx, by, cfg.width, cfg.height)
+      this.graphics.lineStyle(2, accent, 1)
+      this.graphics.strokeRect(bx, by, cfg.width, cfg.height)
 
-    if (this.type === 'archer') this.drawArcher(bx, by, cfg, accent)
-    else if (this.type === 'mage') this.drawMage(bx, by, cfg, accent)
-    else this.drawMortar(bx, by, cfg, accent)
+      if (this.type === 'archer') this.drawArcher(bx, by, cfg, accent)
+      else if (this.type === 'mage') this.drawMage(bx, by, cfg, accent)
+      else this.drawMortar(bx, by, cfg, accent)
+    } else {
+      if (this.type === 'mage') this.drawMage(bx, by, cfg, accent)
+      else if (this.type === 'mortar') this.drawMortar(bx, by, cfg, accent)
+    }
 
     this.disruptGraphics.clear()
     if (disrupted) {
@@ -165,7 +176,6 @@ export class Tower extends Phaser.GameObjects.GameObject {
     // barrel angled to upper-right
     this.graphics.fillStyle(accent)
     const barrelLen = 10 + this.level * 3
-    const angle = -Math.PI * 0.35
     this.graphics.fillRect(
       this.x - 4,
       by - barrelLen,
@@ -227,6 +237,28 @@ export class Tower extends Phaser.GameObjects.GameObject {
 
   preUpdate(time: number, _delta: number) {
     if (!this.active) return
+
+    // Atualiza zona de slow independente da cadência de disparo
+    if (this.slowZone) {
+      if (time >= this.slowZone.until) {
+        this.slowZone.graphics.destroy()
+        this.slowZone = null
+      } else {
+        const scene = this.scene as any
+        const enemies: EnemyLike[] = scene.getEnemies ? scene.getEnemies() : []
+        for (const e of enemies) {
+          const dx = e.x - this.slowZone.x
+          const dy = e.y - this.slowZone.y
+          if (Math.sqrt(dx * dx + dy * dy) <= this.slowZone.radius) {
+            const enemy = e as any
+            if (typeof enemy.applyEffect === 'function') {
+              enemy.applyEffect('slow', 150)
+            }
+          }
+        }
+      }
+    }
+
     if (time < this.disruptedUntil) return
 
     const cfg = this.getStats()
@@ -245,6 +277,20 @@ export class Tower extends Phaser.GameObjects.GameObject {
 
     this.lastFiredAt = time
 
+    // Cria zona de slow no mago quando não há zona ativa
+    if (cfg.special === 'slow' && !this.slowZone) {
+      const radius = 85
+      const g = this.scene.add.graphics().setDepth(5)
+      g.fillStyle(0x88eeff, 0.22)
+      g.fillCircle(primary.x, primary.y, radius)
+      g.lineStyle(2, 0xaaf0ff, 0.6)
+      g.strokeCircle(primary.x, primary.y, radius)
+      this.slowZone = { graphics: g, x: primary.x, y: primary.y, radius, until: time + 3500 }
+    }
+
+    const spawnX = this.x
+    const spawnY = this.archerImage ? this.y - 28 : this.y
+
     if (cfg.special === 'triple_shot') {
       const nearest = new NearestTargeting(this.x, this.y)
       const pool = [...inRange]
@@ -257,12 +303,12 @@ export class Tower extends Phaser.GameObjects.GameObject {
       }
       if (targets.length === 0) targets.push(primary)
       for (const t of targets) {
-        new Projectile(this.scene, this.x, this.y, t, cfg.damage, { damageType: cfg.damageType, useArrow: this.type === 'archer' })
+        new Projectile(this.scene, spawnX, spawnY, t, cfg.damage, { damageType: cfg.damageType, useArrow: this.type === 'archer' })
       }
     } else {
-      new Projectile(this.scene, this.x, this.y, primary, cfg.damage, {
+      new Projectile(this.scene, spawnX, spawnY, primary, cfg.damage, {
         damageType: cfg.damageType,
-        slowDuration: cfg.special === 'slow' ? cfg.slowDuration : 0,
+        slowDuration: 0,
         aoeRadius: cfg.special === 'aoe' ? cfg.aoeRadius : 0,
         useArrow: this.type === 'archer',
       })
@@ -274,6 +320,8 @@ export class Tower extends Phaser.GameObjects.GameObject {
     this.graphics.destroy()
     this.rangeGraphics.destroy()
     this.disruptGraphics.destroy()
+    this.archerImage?.destroy()
+    this.slowZone?.graphics.destroy()
     super.destroy()
   }
 }

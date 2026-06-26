@@ -20,10 +20,10 @@ interface TowerSlot {
 // ── Fase 1 — waypoints rastreados do mapa fase1.png (800×560) ──
 // Trajeto: →  ↑  ←  ↓  ←  ↑  →  ↑  →  ↓  ←  ↓(saída)
 const WAYPOINTS_P1: Point[] = [
-  { x: 0,   y: 230 },  // entrada esquerda
-  { x: 400, y: 230 },  // → direita
-  { x: 400, y: 105 },  // ↑ cima
-  { x: 280, y: 110 },  // ← esquerda
+  { x: 0,   y: 220 },  // entrada esquerda
+  { x: 400, y: 220 },  // → direita
+  { x: 400, y: 90 },  // ↑ cima
+  { x: 280, y: 90 },  // ← esquerda
   { x: 280, y: 440 },  // ↓ baixo
   { x: 140,  y: 440 },  // ← esquerda (pequeno)
   { x: 140,  y: 320 },  // ↑ cima (grande)
@@ -39,7 +39,7 @@ const WAYPOINTS_P1: Point[] = [
 ]
 
 const SLOT_POSITIONS_P1: Point[] = [
-  { x: 220, y: 180 },  // bolsão entre trechos horizontais topo/entrada
+  { x: 210, y: 170 },  // bolsão entre trechos horizontais topo/entrada
   { x: 460, y: 245 },  // área direita, altura média
   { x: 460, y: 465 },  // extremo direito, meio
   { x: 215, y: 380 },  // área baixo, depois do horizontal final
@@ -92,8 +92,9 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('orc_idle',  'assets/orc_idle.png',  { frameWidth: 100, frameHeight: 100 })
     this.load.spritesheet('orc_hurt',  'assets/orc_hurt.png',  { frameWidth: 100, frameHeight: 100 })
     this.load.spritesheet('orc_death', 'assets/orc_death.png', { frameWidth: 100, frameHeight: 100 })
-    this.load.image('arrow',     'assets/arrow.png')
-    this.load.image('map_fase1', 'assets/fase1pixel.png')
+    this.load.image('arrow',          'assets/arrow.png')
+    this.load.image('torre_arqueiro', 'assets/torreArqueiro.png')
+    this.load.image('map_fase1',      'assets/fase1pixel.png')
   }
 
   private createAnimations() {
@@ -382,17 +383,6 @@ export class GameScene extends Phaser.Scene {
     pauseBtn.on('pointerover', () => pauseBtn.setAlpha(0.8))
     pauseBtn.on('pointerout',  () => pauseBtn.setAlpha(1))
     pauseBtn.on('pointerdown', () => this.openPause())
-
-    const menuBtn = this.add.text(730, 8, 'Menu', {
-      fontSize: '13px', color: '#ccbbff',
-      backgroundColor: '#221133', padding: { x: 8, y: 5 }
-    }).setInteractive({ cursor: 'pointer' })
-    menuBtn.on('pointerover', () => menuBtn.setAlpha(0.8))
-    menuBtn.on('pointerout',  () => menuBtn.setAlpha(1))
-    menuBtn.on('pointerdown', () => {
-      this.shutdown()
-      this.scene.start('MenuScene')
-    })
   }
 
   private refreshHUD() {

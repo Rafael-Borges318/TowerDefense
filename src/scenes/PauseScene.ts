@@ -34,7 +34,7 @@ export class PauseScene extends Phaser.Scene {
     resumeBtn.on('pointerdown', () => this.resume())
 
     // Menu
-    const menuBtn = this.add.text(W / 2, py + 170, '🏠  Menu Principal', {
+    const menuBtn = this.add.text(W / 2, py + 170, 'Menu Principal', {
       fontSize: '16px', color: '#ccbbff',
       backgroundColor: '#1a0e33', padding: { x: 20, y: 8 }
     }).setOrigin(0.5).setInteractive({ cursor: 'pointer' })

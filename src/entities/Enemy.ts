@@ -135,10 +135,6 @@ export class Enemy extends Phaser.GameObjects.GameObject {
     this.drawHealthBar()
 
     this.effectGraphics.clear()
-    if (isSlowed) {
-      this.effectGraphics.lineStyle(2, 0x4488ff, 0.7)
-      this.effectGraphics.strokeCircle(this.x, this.y, this.sprite.displayWidth / 2 + 4)
-    }
   }
 
   takeDamage(amount: number, damageType: DamageType) {
