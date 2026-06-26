@@ -8,21 +8,37 @@ import { EventBus, Events } from '../events/EventBus'
 interface Point { x: number; y: number }
 interface HordeDef { enemies: { type: EnemyType; count: number }[]; interval: number; bonus: number }
 
+const HORDES_PER_PHASE = 5
+const HEALTH_SCALE_PER_HORDE = 0.05
+
 function generateHordes(phase: number): HordeDef[] {
-  const count = 2 + phase
+  const count = HORDES_PER_PHASE
   const hordes: HordeDef[] = []
 
   for (let h = 0; h < count; h++) {
     const hNum = h + 1
+
+    // Goblins: start small on horde 1, grow gently across 5 hordes.
+    // Base: 6 + (phase-1)*3 so later phases open stronger.
+    // Growth: +2 per horde within the phase.
+    const goblinCount = 6 + (phase - 1) * 3 + hNum * 2
+
     const enemies: { type: EnemyType; count: number }[] = [
-      { type: 'goblin', count: 4 + phase + hNum * 2 }
+      { type: 'goblin', count: goblinCount }
     ]
+
+    // Trolls appear from horde 2 onward (or phase 2+).
     if (hNum >= 2 || phase >= 2) {
-      enemies.push({ type: 'troll', count: Math.max(1, Math.floor(phase * 1.2 + hNum * 0.7)) })
+      const trollCount = Math.max(1, Math.floor((phase - 1) * 1.5 + hNum * 0.8))
+      enemies.push({ type: 'troll', count: trollCount })
     }
-    if (hNum >= 3 || phase >= 3) {
-      enemies.push({ type: 'shaman', count: Math.max(1, Math.floor(phase * 0.7 + hNum * 0.4)) })
+
+    // Shamans appear from horde 4 onward (or phase 3+).
+    if (hNum >= 4 || phase >= 3) {
+      const shamanCount = Math.max(1, Math.floor((phase - 1) * 0.8 + (hNum - 3) * 0.7))
+      enemies.push({ type: 'shaman', count: shamanCount })
     }
+
     hordes.push({
       enemies,
       interval: Math.max(450, 1200 - phase * 60 - hNum * 40),
@@ -39,6 +55,7 @@ export class WaveManager {
 
   private hordes: HordeDef[]
   private currentHorde: number = 0
+  private currentHealthMultiplier: number = 1
   private spawnQueue: EnemyType[] = []
   private spawnTimer: Phaser.Time.TimerEvent | null = null
   private activeCount: number = 0
@@ -82,6 +99,9 @@ export class WaveManager {
     const def = this.hordes[this.currentHorde]
     this.currentHorde++
 
+    // 5% cumulative health increase per horde (horde 1 = base, horde 2 = +5%, etc.)
+    this.currentHealthMultiplier = Math.pow(1 + HEALTH_SCALE_PER_HORDE, this.currentHorde - 1)
+
     this.spawnQueue = []
     for (const entry of def.enemies) {
       for (let i = 0; i < entry.count; i++) this.spawnQueue.push(entry.type)
@@ -103,7 +123,7 @@ export class WaveManager {
     const type = this.spawnQueue.shift()
     if (!type) { this.isSpawning = false; return }
 
-    const enemy = EnemyFactory.create(type, this.waypoints, this.scene)
+    const enemy = EnemyFactory.create(type, this.waypoints, this.scene, this.currentHealthMultiplier)
     this.aliveEnemies.push(enemy)
 
     if (this.spawnQueue.length === 0) this.isSpawning = false
