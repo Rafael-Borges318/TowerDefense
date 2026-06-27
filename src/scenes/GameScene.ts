@@ -45,6 +45,62 @@ const SLOT_POSITIONS_P1: Point[] = [
   { x: 215, y: 365 },  // área baixo, depois do horizontal final
 ]
 
+// TODO: ajustar WAYPOINTS_P3 conforme o caminho real da imagem fase3pixel.png
+const WAYPOINTS_P3: Point[] = [
+  { x: 0,   y: 100 },
+  { x: 200, y: 100 },
+  { x: 200, y: 250 },
+  { x: 100, y: 250 },
+  { x: 100, y: 400 },
+  { x: 350, y: 400 },
+  { x: 350, y: 150 },
+  { x: 550, y: 150 },
+  { x: 550, y: 350 },
+  { x: 450, y: 350 },
+  { x: 450, y: 480 },
+  { x: 700, y: 480 },
+  { x: 700, y: 250 },
+  { x: 800, y: 250 }
+]
+
+// TODO: ajustar SLOT_POSITIONS_P3 conforme posições disponíveis no mapa
+const SLOT_POSITIONS_P3: Point[] = [
+  { x: 100, y: 180 },
+  { x: 250, y: 320 },
+  { x: 450, y: 220 },
+  { x: 400, y: 450 },
+  { x: 620, y: 250 },
+  { x: 620, y: 420 },
+  { x: 750, y: 150 }
+]
+
+// TODO: ajustar WAYPOINTS_P4 conforme o caminho real da imagem fase4pixel.png
+const WAYPOINTS_P4: Point[] = [
+  { x: 0,   y: 450 },
+  { x: 150, y: 450 },
+  { x: 150, y: 200 },
+  { x: 300, y: 200 },
+  { x: 300, y: 450 },
+  { x: 450, y: 450 },
+  { x: 450, y: 100 },
+  { x: 600, y: 100 },
+  { x: 600, y: 350 },
+  { x: 700, y: 350 },
+  { x: 700, y: 560 }
+]
+
+// TODO: ajustar SLOT_POSITIONS_P4 conforme posições disponíveis no mapa
+const SLOT_POSITIONS_P4: Point[] = [
+  { x: 80,  y: 350 },
+  { x: 220, y: 300 },
+  { x: 380, y: 320 },
+  { x: 520, y: 250 },
+  { x: 520, y: 480 },
+  { x: 650, y: 200 },
+  { x: 750, y: 450 }
+]
+
+
 // ── Fases 2+ — mapa procedural ──
 const WAYPOINTS: Point[] = [
   { x: 50,  y: 300 },
@@ -103,6 +159,8 @@ export class GameScene extends Phaser.Scene {
     this.load.image('torre_morteiro_2', 'assets/torreMorteiro1.png')
     this.load.image('torre_morteiro_3', 'assets/torreMorteiro2.png')
     this.load.image('map_fase1',      'assets/fase1pixel.png')
+    this.load.image('map_fase3',      'assets/fase3pixel.png')
+    this.load.image('map_fase4',      'assets/fase4pixel.png')
 
     // Load boss assets
     for (let i = 0; i < 10; i++) {
@@ -142,14 +200,34 @@ export class GameScene extends Phaser.Scene {
     GameManager.reset()
     EconomyManager.reset(this.phase)
 
-    const waypoints    = this.phase === 1 ? WAYPOINTS_P1    : WAYPOINTS
-    const slotPositions = this.phase === 1 ? SLOT_POSITIONS_P1 : SLOT_POSITIONS
+    let waypoints: Point[]
+    let slotPositions: Point[]
+
+    if (this.phase === 1) {
+      waypoints = WAYPOINTS_P1
+      slotPositions = SLOT_POSITIONS_P1
+    } else if (this.phase === 3) {
+      waypoints = WAYPOINTS_P3
+      slotPositions = SLOT_POSITIONS_P3
+    } else if (this.phase === 4) {
+      waypoints = WAYPOINTS_P4
+      slotPositions = SLOT_POSITIONS_P4
+    } else {
+      waypoints = WAYPOINTS
+      slotPositions = SLOT_POSITIONS
+    }
 
     this.waveManager = new WaveManager(this, waypoints, this.phase)
 
     if (this.phase === 1) {
       this.add.image(400, 280, 'map_fase1').setDisplaySize(800, 560)
       this.drawPhase1Markers()
+    } else if (this.phase === 3) {
+      this.add.image(400, 280, 'map_fase3').setDisplaySize(800, 560)
+      this.drawMarkersForPhase(3, WAYPOINTS_P3)
+    } else if (this.phase === 4) {
+      this.add.image(400, 280, 'map_fase4').setDisplaySize(800, 560)
+      this.drawMarkersForPhase(4, WAYPOINTS_P4)
     } else {
       this.drawBackground()
       this.drawPath()
@@ -355,6 +433,22 @@ export class GameScene extends Phaser.Scene {
     g.fillStyle(0x220000, 0.75); g.fillCircle(exitX, 543, 16)
     g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(exitX, 543, 16)
     this.add.text(exitX, 508, '🏰', { fontSize: '24px' }).setOrigin(0.5)
+  }
+
+  private drawMarkersForPhase(phaseNum: number, waypoints: Point[]) {
+    const g = this.add.graphics()
+
+    // Entry marker
+    const start = waypoints[0]
+    g.fillStyle(0x003300, 0.75); g.fillCircle(start.x, start.y, 16)
+    g.lineStyle(3, 0x00ff44, 0.9); g.strokeCircle(start.x, start.y, 16)
+    this.add.text(start.x, start.y, '▶', { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
+
+    // Castle marker
+    const last = waypoints[waypoints.length - 1]
+    g.fillStyle(0x220000, 0.75); g.fillCircle(last.x, last.y, 16)
+    g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(last.x, last.y, 16)
+    this.add.text(last.x, last.y - 32, '🏰', { fontSize: '24px' }).setOrigin(0.5)
   }
 
   private createSlots(positions: Point[]) {
