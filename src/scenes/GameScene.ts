@@ -45,6 +45,7 @@ const SLOT_POSITIONS_P1: Point[] = [
   { x: 215, y: 365 },  // área baixo, depois do horizontal final
 ]
 
+<<<<<<< HEAD
 // ── Fase 2 — (fase2pixel.png) ──
 // Entrada: topo da estrada esquerda (x=120, y=0) descendo
 // Sequência: baixo, esquerda, cima, direita  ×3  + baixo, esquerda, cima → saída topo
@@ -75,6 +76,65 @@ const SLOT_POSITIONS_P2: Point[] = [
 ]
 
 // ── Fases 3+ — mapa procedural ──
+=======
+// TODO: ajustar WAYPOINTS_P3 conforme o caminho real da imagem fase3pixel.png
+const WAYPOINTS_P3: Point[] = [
+  { x: 0,   y: 100 },
+  { x: 200, y: 100 },
+  { x: 200, y: 250 },
+  { x: 100, y: 250 },
+  { x: 100, y: 400 },
+  { x: 350, y: 400 },
+  { x: 350, y: 150 },
+  { x: 550, y: 150 },
+  { x: 550, y: 350 },
+  { x: 450, y: 350 },
+  { x: 450, y: 480 },
+  { x: 700, y: 480 },
+  { x: 700, y: 250 },
+  { x: 800, y: 250 }
+]
+
+// TODO: ajustar SLOT_POSITIONS_P3 conforme posições disponíveis no mapa
+const SLOT_POSITIONS_P3: Point[] = [
+  { x: 100, y: 180 },
+  { x: 250, y: 320 },
+  { x: 450, y: 220 },
+  { x: 400, y: 450 },
+  { x: 620, y: 250 },
+  { x: 620, y: 420 },
+  { x: 750, y: 150 }
+]
+
+// TODO: ajustar WAYPOINTS_P4 conforme o caminho real da imagem fase4pixel.png
+const WAYPOINTS_P4: Point[] = [
+  { x: 0,   y: 450 },
+  { x: 150, y: 450 },
+  { x: 150, y: 200 },
+  { x: 300, y: 200 },
+  { x: 300, y: 450 },
+  { x: 450, y: 450 },
+  { x: 450, y: 100 },
+  { x: 600, y: 100 },
+  { x: 600, y: 350 },
+  { x: 700, y: 350 },
+  { x: 700, y: 560 }
+]
+
+// TODO: ajustar SLOT_POSITIONS_P4 conforme posições disponíveis no mapa
+const SLOT_POSITIONS_P4: Point[] = [
+  { x: 80,  y: 350 },
+  { x: 220, y: 300 },
+  { x: 380, y: 320 },
+  { x: 520, y: 250 },
+  { x: 520, y: 480 },
+  { x: 650, y: 200 },
+  { x: 750, y: 450 }
+]
+
+
+// ── Fases 2+ — mapa procedural ──
+>>>>>>> 4e935047f3da4e75526d8405a9a270d486f3c2aa
 const WAYPOINTS: Point[] = [
   { x: 50,  y: 300 },
   { x: 200, y: 300 },
@@ -131,8 +191,23 @@ export class GameScene extends Phaser.Scene {
     this.load.image('torre_morteiro',   'assets/torreMorteiro.png')
     this.load.image('torre_morteiro_2', 'assets/torreMorteiro1.png')
     this.load.image('torre_morteiro_3', 'assets/torreMorteiro2.png')
+<<<<<<< HEAD
     this.load.image('map_fase1', 'assets/fase1pixel.png')
     this.load.image('map_fase2', 'assets/fase2pixel.png')
+=======
+    this.load.image('map_fase1',      'assets/fase1pixel.png')
+    this.load.image('map_fase3',      'assets/fase3pixel.png')
+    this.load.image('map_fase4',      'assets/fase4pixel.png')
+
+    // Load boss assets
+    for (let i = 0; i < 10; i++) {
+      const frameStr = i.toString().padStart(3, '0')
+      this.load.image(`boss_walk_${i}`, `assets/bossfinal/1_TROLL/Troll_01_1_WALK_${frameStr}.png`)
+      this.load.image(`boss_hurt_${i}`, `assets/bossfinal/1_TROLL/Troll_01_1_HURT_${frameStr}.png`)
+      this.load.image(`boss_death_${i}`, `assets/bossfinal/1_TROLL/Troll_01_1_DIE_${frameStr}.png`)
+      this.load.image(`boss_idle_${i}`, `assets/bossfinal/1_TROLL/Troll_01_1_IDLE_${frameStr}.png`)
+    }
+>>>>>>> 4e935047f3da4e75526d8405a9a270d486f3c2aa
   }
 
   private createAnimations() {
@@ -141,6 +216,19 @@ export class GameScene extends Phaser.Scene {
     this.anims.create({ key: 'orc_idle',  frames: this.anims.generateFrameNumbers('orc_idle',  { start: 0, end: 5 }), frameRate: 8,  repeat: -1 })
     this.anims.create({ key: 'orc_hurt',  frames: this.anims.generateFrameNumbers('orc_hurt',  { start: 0, end: 3 }), frameRate: 12, repeat: 0 })
     this.anims.create({ key: 'orc_death', frames: this.anims.generateFrameNumbers('orc_death', { start: 0, end: 3 }), frameRate: 6,  repeat: 0 })
+
+    // Boss animations
+    const createBossAnim = (key: string, prefix: string, repeat: number, frameRate: number) => {
+      const frames: { key: string }[] = []
+      for (let i = 0; i < 10; i++) {
+        frames.push({ key: `${prefix}_${i}` })
+      }
+      this.anims.create({ key, frames, frameRate, repeat })
+    }
+    createBossAnim('boss_walk', 'boss_walk', -1, 10)
+    createBossAnim('boss_idle', 'boss_idle', -1, 8)
+    createBossAnim('boss_hurt', 'boss_hurt', 0, 12)
+    createBossAnim('boss_death', 'boss_death', 0, 10)
   }
 
   create(data?: { phase?: number }) {
@@ -150,17 +238,45 @@ export class GameScene extends Phaser.Scene {
     GameManager.reset()
     EconomyManager.reset(this.phase)
 
+<<<<<<< HEAD
     const waypoints     = this.phase === 1 ? WAYPOINTS_P1     : this.phase === 2 ? WAYPOINTS_P2     : WAYPOINTS
     const slotPositions = this.phase === 1 ? SLOT_POSITIONS_P1 : this.phase === 2 ? SLOT_POSITIONS_P2 : SLOT_POSITIONS
+=======
+    let waypoints: Point[]
+    let slotPositions: Point[]
+
+    if (this.phase === 1) {
+      waypoints = WAYPOINTS_P1
+      slotPositions = SLOT_POSITIONS_P1
+    } else if (this.phase === 3) {
+      waypoints = WAYPOINTS_P3
+      slotPositions = SLOT_POSITIONS_P3
+    } else if (this.phase === 4) {
+      waypoints = WAYPOINTS_P4
+      slotPositions = SLOT_POSITIONS_P4
+    } else {
+      waypoints = WAYPOINTS
+      slotPositions = SLOT_POSITIONS
+    }
+>>>>>>> 4e935047f3da4e75526d8405a9a270d486f3c2aa
 
     this.waveManager = new WaveManager(this, waypoints, this.phase)
 
     if (this.phase === 1) {
       this.add.image(400, 280, 'map_fase1').setDisplaySize(800, 560)
       this.drawPhase1Markers()
+<<<<<<< HEAD
     } else if (this.phase === 2) {
       this.add.image(400, 280, 'map_fase2').setDisplaySize(800, 560)
       this.drawPhase2Markers()
+=======
+    } else if (this.phase === 3) {
+      this.add.image(400, 280, 'map_fase3').setDisplaySize(800, 560)
+      this.drawMarkersForPhase(3, WAYPOINTS_P3)
+    } else if (this.phase === 4) {
+      this.add.image(400, 280, 'map_fase4').setDisplaySize(800, 560)
+      this.drawMarkersForPhase(4, WAYPOINTS_P4)
+>>>>>>> 4e935047f3da4e75526d8405a9a270d486f3c2aa
     } else {
       this.drawBackground()
       this.drawPath()
@@ -368,6 +484,7 @@ export class GameScene extends Phaser.Scene {
     this.add.text(exitX, 508, '🏰', { fontSize: '24px' }).setOrigin(0.5)
   }
 
+<<<<<<< HEAD
   private drawPhase2Markers() {
     const g = this.add.graphics()
 
@@ -382,6 +499,22 @@ export class GameScene extends Phaser.Scene {
     g.fillStyle(0x220000, 0.75); g.fillCircle(exitX, 20, 16)
     g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(exitX, 20, 16)
     this.add.text(exitX, 52, '🏰', { fontSize: '24px' }).setOrigin(0.5)
+=======
+  private drawMarkersForPhase(phaseNum: number, waypoints: Point[]) {
+    const g = this.add.graphics()
+
+    // Entry marker
+    const start = waypoints[0]
+    g.fillStyle(0x003300, 0.75); g.fillCircle(start.x, start.y, 16)
+    g.lineStyle(3, 0x00ff44, 0.9); g.strokeCircle(start.x, start.y, 16)
+    this.add.text(start.x, start.y, '▶', { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
+
+    // Castle marker
+    const last = waypoints[waypoints.length - 1]
+    g.fillStyle(0x220000, 0.75); g.fillCircle(last.x, last.y, 16)
+    g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(last.x, last.y, 16)
+    this.add.text(last.x, last.y - 32, '🏰', { fontSize: '24px' }).setOrigin(0.5)
+>>>>>>> 4e935047f3da4e75526d8405a9a270d486f3c2aa
   }
 
   private createSlots(positions: Point[]) {
@@ -792,6 +925,7 @@ export class GameScene extends Phaser.Scene {
         { name: 'Goblin',  color: 0x22cc44, hex: '#22dd66', lines: ['HP: 60  |  Vel: rápida', 'Sem resistências', 'Recompensa: 8💰'] },
         { name: 'Troll',   color: 0x9966cc, hex: '#bb88ff', lines: ['HP: 160  |  Vel: lenta', 'Resist. física: 25%', 'Recompensa: 30💰'] },
         { name: 'Xamã',    color: 0xcc8822, hex: '#ffbb44', lines: ['HP: 120  |  Vel: média', 'Resist. mágica: 65%', 'Amaldiçoa torres próximas', 'Recompensa: 20💰'] },
+        { name: 'Super Orc', color: 0xff3333, hex: '#ff4444', lines: ['HP: 1200 |  Vel: muito lenta', 'Resistências: 30% Fís. / 30% Mág.', 'O terrível chefe da Fase 1!', 'Recompensa: 150💰'] },
       ]
       entries.forEach(({ name, color, hex, lines }, i) => {
         const ey = cy + i * 112
