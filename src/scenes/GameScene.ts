@@ -45,7 +45,36 @@ const SLOT_POSITIONS_P1: Point[] = [
   { x: 215, y: 365 },  // área baixo, depois do horizontal final
 ]
 
-// ── Fases 2+ — mapa procedural ──
+// ── Fase 2 — (fase2pixel.png) ──
+// Entrada: topo da estrada esquerda (x=120, y=0) descendo
+// Sequência: baixo, esquerda, cima, direita  ×3  + baixo, esquerda, cima → saída topo
+const WAYPOINTS_P2: Point[] = [
+  { x: 120, y: 0   },  // entrada pelo topo-esquerda
+  { x: 120, y: 480 },  // ↓ baixo (1)
+  { x: 60,  y: 480 },  // ← esquerda (2)
+  { x: 60,  y: 80  },  // ↑ cima (3)
+  { x: 700, y: 80  },  // → direita (4)
+  { x: 700, y: 400 },  // ↓ baixo (5)
+  { x: 200, y: 400 },  // ← esquerda (6)
+  { x: 200, y: 160 },  // ↑ cima (7)
+  { x: 620, y: 160 },  // → direita (8)
+  { x: 620, y: 340 },  // ↓ baixo (9)
+  { x: 300, y: 340 },  // ← esquerda (10)
+  { x: 300, y: 240 },  // ↑ cima (11)
+  { x: 520, y: 240 },  // → direita (12)
+  { x: 520, y: 300 },  // ↓ baixo (13)
+  { x: 360, y: 300 },  // ← esquerda (14)
+  { x: 360, y: -30 },  // ↑ cima (15) — saída pelo topo
+]
+
+const SLOT_POSITIONS_P2: Point[] = [
+  { x: 400, y: 130 },  // entre topo e 2ª linha horizontal
+  { x: 160, y: 310 },  // esquerda, entre verticais x=120 e x=200
+  { x: 640, y: 290 },  // direita, entre verticais x=620 e x=700
+  { x: 400, y: 450 },  // centro-baixo, abaixo da linha y=400
+]
+
+// ── Fases 3+ — mapa procedural ──
 const WAYPOINTS: Point[] = [
   { x: 50,  y: 300 },
   { x: 200, y: 300 },
@@ -102,7 +131,8 @@ export class GameScene extends Phaser.Scene {
     this.load.image('torre_morteiro',   'assets/torreMorteiro.png')
     this.load.image('torre_morteiro_2', 'assets/torreMorteiro1.png')
     this.load.image('torre_morteiro_3', 'assets/torreMorteiro2.png')
-    this.load.image('map_fase1',      'assets/fase1pixel.png')
+    this.load.image('map_fase1', 'assets/fase1pixel.png')
+    this.load.image('map_fase2', 'assets/fase2pixel.png')
   }
 
   private createAnimations() {
@@ -120,14 +150,17 @@ export class GameScene extends Phaser.Scene {
     GameManager.reset()
     EconomyManager.reset(this.phase)
 
-    const waypoints    = this.phase === 1 ? WAYPOINTS_P1    : WAYPOINTS
-    const slotPositions = this.phase === 1 ? SLOT_POSITIONS_P1 : SLOT_POSITIONS
+    const waypoints     = this.phase === 1 ? WAYPOINTS_P1     : this.phase === 2 ? WAYPOINTS_P2     : WAYPOINTS
+    const slotPositions = this.phase === 1 ? SLOT_POSITIONS_P1 : this.phase === 2 ? SLOT_POSITIONS_P2 : SLOT_POSITIONS
 
     this.waveManager = new WaveManager(this, waypoints, this.phase)
 
     if (this.phase === 1) {
       this.add.image(400, 280, 'map_fase1').setDisplaySize(800, 560)
       this.drawPhase1Markers()
+    } else if (this.phase === 2) {
+      this.add.image(400, 280, 'map_fase2').setDisplaySize(800, 560)
+      this.drawPhase2Markers()
     } else {
       this.drawBackground()
       this.drawPath()
@@ -329,10 +362,26 @@ export class GameScene extends Phaser.Scene {
     this.add.text(start.x + 20, start.y, '▶', { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
 
     // Castle marker — bottom exit
-    const exitX = WAYPOINTS_P1[WAYPOINTS_P1.length - 1].x  // x=120
+    const exitX = WAYPOINTS_P1[WAYPOINTS_P1.length - 1].x
     g.fillStyle(0x220000, 0.75); g.fillCircle(exitX, 543, 16)
     g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(exitX, 543, 16)
     this.add.text(exitX, 508, '🏰', { fontSize: '24px' }).setOrigin(0.5)
+  }
+
+  private drawPhase2Markers() {
+    const g = this.add.graphics()
+
+    // Entry marker — top of left road
+    const start = WAYPOINTS_P2[0]
+    g.fillStyle(0x003300, 0.75); g.fillCircle(start.x, start.y + 20, 16)
+    g.lineStyle(3, 0x00ff44, 0.9); g.strokeCircle(start.x, start.y + 20, 16)
+    this.add.text(start.x, start.y + 20, '▼', { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
+
+    // Castle marker — top exit
+    const exitX = WAYPOINTS_P2[WAYPOINTS_P2.length - 1].x
+    g.fillStyle(0x220000, 0.75); g.fillCircle(exitX, 20, 16)
+    g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(exitX, 20, 16)
+    this.add.text(exitX, 52, '🏰', { fontSize: '24px' }).setOrigin(0.5)
   }
 
   private createSlots(positions: Point[]) {
