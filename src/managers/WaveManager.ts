@@ -45,6 +45,16 @@ function generateHordes(phase: number): HordeDef[] {
       bonus: 25 + phase * 8
     })
   }
+
+  // Final boss at the end of Phase 1
+  if (phase === 1) {
+    hordes.push({
+      enemies: [{ type: 'boss', count: 1 }],
+      interval: 1000,
+      bonus: 150
+    })
+  }
+
   return hordes
 }
 

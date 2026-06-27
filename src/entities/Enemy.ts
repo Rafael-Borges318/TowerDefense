@@ -3,7 +3,7 @@ import { EventBus, Events } from '../events/EventBus'
 import type { DamageType } from '../patterns/TargetingStrategy'
 import enemiesConfig from '../config/enemies.json'
 
-export type EnemyType = 'goblin' | 'troll' | 'shaman'
+export type EnemyType = 'goblin' | 'troll' | 'shaman' | 'boss'
 
 interface Point { x: number; y: number }
 
@@ -11,6 +11,7 @@ const SPRITE_CFG: Record<EnemyType, { scale: number; tint?: number }> = {
   goblin: { scale: 1.6 },
   troll:  { scale: 2.3,  tint: 0xddaaff },
   shaman: { scale: 1.9, tint: 0xffcc88 },
+  boss:   { scale: 0.18 },
 }
 
 export class Enemy extends Phaser.GameObjects.GameObject {
@@ -66,10 +67,13 @@ export class Enemy extends Phaser.GameObjects.GameObject {
     this.y = start.y
 
     const sc = SPRITE_CFG[type]
-    this.sprite = scene.add.sprite(start.x, start.y, 'orc_walk')
+    const texKey = type === 'boss' ? 'boss_walk_0' : 'orc_walk'
+    this.sprite = scene.add.sprite(start.x, start.y, texKey)
     this.sprite.setScale(sc.scale).setDepth(10)
     if (sc.tint) this.sprite.setTint(sc.tint)
-    this.sprite.play('orc_walk')
+    
+    const animKey = type === 'boss' ? 'boss_walk' : 'orc_walk'
+    this.sprite.play(animKey)
 
     this.effectGraphics = scene.add.graphics().setDepth(11)
     this.healthBar      = scene.add.graphics().setDepth(12)
@@ -79,9 +83,10 @@ export class Enemy extends Phaser.GameObjects.GameObject {
   }
 
   private drawHealthBar() {
-    const w = 34
+    const w = this.enemyType === 'boss' ? 50 : 34
     const bx = this.x - w / 2
-    const by = this.y - this.sprite.displayHeight / 2 + 26
+    const offset = this.enemyType === 'boss' ? 50 : 26
+    const by = this.y - this.sprite.displayHeight / 2 + offset
     const ratio = Math.max(0, this.health / this.maxHealth)
     this.healthBar.clear()
     this.healthBar.fillStyle(0x440000)
@@ -147,11 +152,13 @@ export class Enemy extends Phaser.GameObjects.GameObject {
       this.destroy()
     } else if (!this.isPlayingHurt && this.sprite.active) {
       this.isPlayingHurt = true
-      this.sprite.play('orc_hurt')
+      const hurtAnim = this.enemyType === 'boss' ? 'boss_hurt' : 'orc_hurt'
+      this.sprite.play(hurtAnim)
       this.sprite.once('animationcomplete', () => {
         if (this.active && this.sprite.active) {
           this.isPlayingHurt = false
-          this.sprite.play('orc_walk')
+          const walkAnim = this.enemyType === 'boss' ? 'boss_walk' : 'orc_walk'
+          this.sprite.play(walkAnim)
         }
       })
     }
@@ -169,7 +176,8 @@ export class Enemy extends Phaser.GameObjects.GameObject {
     const scene = this.scene
 
     if (this.sprite?.active) {
-      this.sprite.play('orc_death')
+      const deathAnim = this.enemyType === 'boss' ? 'boss_death' : 'orc_death'
+      this.sprite.play(deathAnim)
       this.sprite.once('animationcomplete', () => {
         if (this.sprite?.active) this.sprite.destroy()
       })

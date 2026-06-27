@@ -103,6 +103,15 @@ export class GameScene extends Phaser.Scene {
     this.load.image('torre_morteiro_2', 'assets/torreMorteiro1.png')
     this.load.image('torre_morteiro_3', 'assets/torreMorteiro2.png')
     this.load.image('map_fase1',      'assets/fase1pixel.png')
+
+    // Load boss assets
+    for (let i = 0; i < 10; i++) {
+      const frameStr = i.toString().padStart(3, '0')
+      this.load.image(`boss_walk_${i}`, `assets/bossfinal/1_TROLL/Troll_01_1_WALK_${frameStr}.png`)
+      this.load.image(`boss_hurt_${i}`, `assets/bossfinal/1_TROLL/Troll_01_1_HURT_${frameStr}.png`)
+      this.load.image(`boss_death_${i}`, `assets/bossfinal/1_TROLL/Troll_01_1_DIE_${frameStr}.png`)
+      this.load.image(`boss_idle_${i}`, `assets/bossfinal/1_TROLL/Troll_01_1_IDLE_${frameStr}.png`)
+    }
   }
 
   private createAnimations() {
@@ -111,6 +120,19 @@ export class GameScene extends Phaser.Scene {
     this.anims.create({ key: 'orc_idle',  frames: this.anims.generateFrameNumbers('orc_idle',  { start: 0, end: 5 }), frameRate: 8,  repeat: -1 })
     this.anims.create({ key: 'orc_hurt',  frames: this.anims.generateFrameNumbers('orc_hurt',  { start: 0, end: 3 }), frameRate: 12, repeat: 0 })
     this.anims.create({ key: 'orc_death', frames: this.anims.generateFrameNumbers('orc_death', { start: 0, end: 3 }), frameRate: 6,  repeat: 0 })
+
+    // Boss animations
+    const createBossAnim = (key: string, prefix: string, repeat: number, frameRate: number) => {
+      const frames: { key: string }[] = []
+      for (let i = 0; i < 10; i++) {
+        frames.push({ key: `${prefix}_${i}` })
+      }
+      this.anims.create({ key, frames, frameRate, repeat })
+    }
+    createBossAnim('boss_walk', 'boss_walk', -1, 10)
+    createBossAnim('boss_idle', 'boss_idle', -1, 8)
+    createBossAnim('boss_hurt', 'boss_hurt', 0, 12)
+    createBossAnim('boss_death', 'boss_death', 0, 10)
   }
 
   create(data?: { phase?: number }) {
@@ -743,6 +765,7 @@ export class GameScene extends Phaser.Scene {
         { name: 'Goblin',  color: 0x22cc44, hex: '#22dd66', lines: ['HP: 60  |  Vel: rápida', 'Sem resistências', 'Recompensa: 8💰'] },
         { name: 'Troll',   color: 0x9966cc, hex: '#bb88ff', lines: ['HP: 160  |  Vel: lenta', 'Resist. física: 25%', 'Recompensa: 30💰'] },
         { name: 'Xamã',    color: 0xcc8822, hex: '#ffbb44', lines: ['HP: 120  |  Vel: média', 'Resist. mágica: 65%', 'Amaldiçoa torres próximas', 'Recompensa: 20💰'] },
+        { name: 'Super Orc', color: 0xff3333, hex: '#ff4444', lines: ['HP: 1200 |  Vel: muito lenta', 'Resistências: 30% Fís. / 30% Mág.', 'O terrível chefe da Fase 1!', 'Recompensa: 150💰'] },
       ]
       entries.forEach(({ name, color, hex, lines }, i) => {
         const ey = cy + i * 112

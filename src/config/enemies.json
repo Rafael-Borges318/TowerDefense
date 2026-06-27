@@ -31,5 +31,15 @@
     "curseInterval": 3500,
     "curseDuration": 2000,
     "curseRange": 130
+  },
+  "boss": {
+    "health": 1200,
+    "speed": 30,
+    "reward": 150,
+    "physicalResist": 30,
+    "magicResist": 30,
+    "radius": 35,
+    "bodyColor": "0xff3333",
+    "outlineColor": "0x550000"
   }
 }
