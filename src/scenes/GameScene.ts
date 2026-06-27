@@ -39,10 +39,10 @@ const WAYPOINTS_P1: Point[] = [
 ]
 
 const SLOT_POSITIONS_P1: Point[] = [
-  { x: 210, y: 170 },  // bolsão entre trechos horizontais topo/entrada
+  { x: 215, y: 155 },  // bolsão entre trechos horizontais topo/entrada
   { x: 460, y: 245 },  // área direita, altura média
-  { x: 460, y: 465 },  // extremo direito, meio
-  { x: 215, y: 380 },  // área baixo, depois do horizontal final
+  { x: 460, y: 440 },  // extremo direito, meio
+  { x: 215, y: 365 },  // área baixo, depois do horizontal final
 ]
 
 // ── Fases 2+ — mapa procedural ──
@@ -93,7 +93,15 @@ export class GameScene extends Phaser.Scene {
     this.load.spritesheet('orc_hurt',  'assets/orc_hurt.png',  { frameWidth: 100, frameHeight: 100 })
     this.load.spritesheet('orc_death', 'assets/orc_death.png', { frameWidth: 100, frameHeight: 100 })
     this.load.image('arrow',          'assets/arrow.png')
-    this.load.image('torre_arqueiro', 'assets/torreArqueiro.png')
+    this.load.image('torre_arqueiro',   'assets/torreArqueiro.png')
+    this.load.image('torre_arqueiro_2', 'assets/torreArqueiro1.png')
+    this.load.image('torre_arqueiro_3', 'assets/torreArqueiro2.png')
+    this.load.image('torre_mago',       'assets/torreMago.png')
+    this.load.image('torre_mago_2',     'assets/torreMago1.png')
+    this.load.image('torre_mago_3',     'assets/torreMago2.png')
+    this.load.image('torre_morteiro',   'assets/torreMorteiro.png')
+    this.load.image('torre_morteiro_2', 'assets/torreMorteiro1.png')
+    this.load.image('torre_morteiro_3', 'assets/torreMorteiro2.png')
     this.load.image('map_fase1',      'assets/fase1pixel.png')
   }
 
@@ -425,7 +433,7 @@ export class GameScene extends Phaser.Scene {
 
   private showPhaseCompleteOverlay(phase: number, stars: number, score: number) {
     this.closePopup()
-    const ov = this.add.container(0, 0)
+    const ov = this.add.container(0, 0).setDepth(50)
 
     const dim = this.add.graphics()
     dim.fillStyle(0x000000, 0.8)
@@ -516,7 +524,7 @@ export class GameScene extends Phaser.Scene {
     const px = Math.min(slot.x + 30, 590)
     const py = Math.max(50, Math.min(slot.y + 35, 560 - popH - 10))
 
-    this.popup = this.add.container(px, py)
+    this.popup = this.add.container(px, py).setDepth(20)
 
     if (!slot.tower) {
       this.buildPopup(slot)

@@ -26,6 +26,8 @@ export class Tower extends Phaser.GameObjects.GameObject {
   private rangeGraphics: Phaser.GameObjects.Graphics
   private disruptGraphics: Phaser.GameObjects.Graphics
   private archerImage: Phaser.GameObjects.Image | null = null
+  private magoImage: Phaser.GameObjects.Image | null = null
+  private morteiroImage: Phaser.GameObjects.Image | null = null
   private slowZone: { graphics: Phaser.GameObjects.Graphics; x: number; y: number; radius: number; until: number } | null = null
   private lastFiredAt: number = 0
   private disruptedUntil: number = 0
@@ -47,7 +49,13 @@ export class Tower extends Phaser.GameObjects.GameObject {
     this.graphics = scene.add.graphics()
 
     if (this.type === 'archer' && scene.textures.exists('torre_arqueiro')) {
-      this.archerImage = scene.add.image(x, y, 'torre_arqueiro').setDisplaySize(64, 64).setDepth(10)
+      this.archerImage = scene.add.image(x, y, this.archerTextureKey()).setDisplaySize(100, 100).setDepth(10)
+    }
+    if (this.type === 'mage' && scene.textures.exists('torre_mago')) {
+      this.magoImage = scene.add.image(x, y, this.magoTextureKey()).setDisplaySize(100, 100).setDepth(10)
+    }
+    if (this.type === 'mortar' && scene.textures.exists('torre_morteiro')) {
+      this.morteiroImage = scene.add.image(x, y, this.morteiroTextureKey()).setDisplaySize(90, 90).setDepth(10)
     }
 
     this.draw()
@@ -84,7 +92,7 @@ export class Tower extends Phaser.GameObjects.GameObject {
 
     this.graphics.clear()
 
-    if (!this.archerImage) {
+    if (!this.archerImage && !this.magoImage && !this.morteiroImage) {
       this.graphics.fillStyle(body)
       this.graphics.fillRect(bx, by, cfg.width, cfg.height)
       this.graphics.lineStyle(2, accent, 1)
@@ -93,9 +101,6 @@ export class Tower extends Phaser.GameObjects.GameObject {
       if (this.type === 'archer') this.drawArcher(bx, by, cfg, accent)
       else if (this.type === 'mage') this.drawMage(bx, by, cfg, accent)
       else this.drawMortar(bx, by, cfg, accent)
-    } else {
-      if (this.type === 'mage') this.drawMage(bx, by, cfg, accent)
-      else if (this.type === 'mortar') this.drawMortar(bx, by, cfg, accent)
     }
 
     this.disruptGraphics.clear()
@@ -215,11 +220,40 @@ export class Tower extends Phaser.GameObjects.GameObject {
     })
   }
 
+  private archerTextureKey(): string {
+    if (this.level === 2) return 'torre_arqueiro_2'
+    if (this.level === 3) return 'torre_arqueiro_3'
+    return 'torre_arqueiro'
+  }
+
+  private magoTextureKey(): string {
+    if (this.level === 2) return 'torre_mago_2'
+    if (this.level === 3) return 'torre_mago_3'
+    return 'torre_mago'
+  }
+
+  private morteiroTextureKey(): string {
+    if (this.level === 2) return 'torre_morteiro_2'
+    if (this.level === 3) return 'torre_morteiro_3'
+    return 'torre_morteiro'
+  }
+
+  private morteiroDisplaySize(): number {
+    return 90
+  }
+
   upgrade(): number {
     if (this.level >= 3) return 0
     const cost = this.getBaseCfg().upgradeCost
     this.investedGold += cost
     this.level++
+    if (this.archerImage) this.archerImage.setTexture(this.archerTextureKey())
+    if (this.magoImage) this.magoImage.setTexture(this.magoTextureKey())
+    if (this.morteiroImage) {
+      this.morteiroImage.setTexture(this.morteiroTextureKey())
+      const s = this.morteiroDisplaySize()
+      this.morteiroImage.setDisplaySize(s, s)
+    }
     this.draw()
     return cost
   }
@@ -289,7 +323,9 @@ export class Tower extends Phaser.GameObjects.GameObject {
     }
 
     const spawnX = this.x
-    const spawnY = this.archerImage ? this.y - 28 : this.y
+    const spawnY = this.archerImage ? this.y - 22
+                 : this.morteiroImage ? this.y - 32
+                 : this.y
 
     if (cfg.special === 'triple_shot') {
       const nearest = new NearestTargeting(this.x, this.y)
@@ -311,6 +347,7 @@ export class Tower extends Phaser.GameObjects.GameObject {
         slowDuration: 0,
         aoeRadius: cfg.special === 'aoe' ? cfg.aoeRadius : 0,
         useArrow: this.type === 'archer',
+        bulletColor: this.type === 'mortar' ? 0x222222 : undefined,
       })
     }
   }
@@ -321,6 +358,8 @@ export class Tower extends Phaser.GameObjects.GameObject {
     this.rangeGraphics.destroy()
     this.disruptGraphics.destroy()
     this.archerImage?.destroy()
+    this.magoImage?.destroy()
+    this.morteiroImage?.destroy()
     this.slowZone?.graphics.destroy()
     super.destroy()
   }

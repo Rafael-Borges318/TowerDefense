@@ -6,6 +6,7 @@ interface ProjectileOptions {
   slowDuration?: number
   aoeRadius?: number
   useArrow?: boolean
+  bulletColor?: number
 }
 
 export class Projectile extends Phaser.GameObjects.GameObject {
@@ -18,6 +19,7 @@ export class Projectile extends Phaser.GameObjects.GameObject {
   private damageType: DamageType
   private slowDuration: number
   private aoeRadius: number
+  private bulletColor: number
   private speed: number = 380
 
   private graphics: Phaser.GameObjects.Graphics | null = null
@@ -38,6 +40,7 @@ export class Projectile extends Phaser.GameObjects.GameObject {
     this.damageType = options.damageType
     this.slowDuration = options.slowDuration ?? 0
     this.aoeRadius    = options.aoeRadius ?? 0
+    this.bulletColor  = options.bulletColor ?? (options.damageType === 'magic' ? 0xcc44ff : 0xffee00)
 
     if (options.useArrow && this.aoeRadius === 0 && scene.textures.exists('arrow')) {
       this.arrowImage = scene.add.image(x, y, 'arrow').setScale(0.8).setDepth(13)
@@ -54,8 +57,7 @@ export class Projectile extends Phaser.GameObjects.GameObject {
   private drawBullet() {
     if (!this.graphics) return
     this.graphics.clear()
-    const color = this.damageType === 'magic' ? 0xcc44ff : 0xffee00
-    this.graphics.fillStyle(color)
+    this.graphics.fillStyle(this.bulletColor)
     this.graphics.fillCircle(this.x, this.y, this.aoeRadius > 0 ? 7 : 5)
     if (this.damageType === 'magic') {
       this.graphics.lineStyle(1, 0xffffff, 0.5)
