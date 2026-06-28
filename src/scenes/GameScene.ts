@@ -859,7 +859,7 @@ export class GameScene extends Phaser.Scene {
         { name: 'Goblin',  color: 0x22cc44, hex: '#22dd66', lines: ['HP: 60  |  Vel: rápida', 'Sem resistências', 'Recompensa: 8💰'] },
         { name: 'Troll',   color: 0x9966cc, hex: '#bb88ff', lines: ['HP: 160  |  Vel: lenta', 'Resist. física: 25%', 'Recompensa: 30💰'] },
         { name: 'Xamã',    color: 0xcc8822, hex: '#ffbb44', lines: ['HP: 120  |  Vel: média', 'Resist. mágica: 65%', 'Amaldiçoa torres próximas', 'Recompensa: 20💰'] },
-        { name: 'Super Orc', color: 0xff3333, hex: '#ff4444', lines: ['HP: 1200 |  Vel: muito lenta', 'Resistências: 30% Fís. / 30% Mág.', 'O terrível chefe da Fase 1!', 'Recompensa: 150💰'] },
+        { name: 'Super Orc', color: 0xff3333, hex: '#ff4444', lines: ['HP: 1200 |  Vel: muito lenta', 'Resistências: 30% Fís. / 30% Mág.', 'O terrível chefe final — Fase 4!', 'Recompensa: 150💰'] },
       ]
       entries.forEach(({ name, color, hex, lines }, i) => {
         const ey = cy + i * 112

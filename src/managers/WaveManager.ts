@@ -46,8 +46,8 @@ function generateHordes(phase: number): HordeDef[] {
     })
   }
 
-  // Final boss at the end of Phase 1
-  if (phase === 1) {
+  // Final boss at the end of Phase 4 (the last phase) — appears alone
+  if (phase === 4) {
     hordes.push({
       enemies: [{ type: 'boss', count: 1 }],
       interval: 1000,
