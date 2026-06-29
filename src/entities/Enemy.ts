@@ -1,11 +1,25 @@
 import Phaser from 'phaser'
 import { EventBus, Events } from '../events/EventBus'
-import type { DamageType } from '../patterns/TargetingStrategy'
+import type { DamageType, Damageable } from '../patterns/TargetingStrategy'
 import enemiesConfig from '../config/enemies.json'
+import { SLOW_SPEED_MULTIPLIER, ENEMY_DEATH_CLEANUP_MS } from '../constants/game'
 
 export type EnemyType = 'goblin' | 'troll' | 'shaman' | 'boss'
 
 interface Point { x: number; y: number }
+
+interface EnemyConfig {
+  health: number
+  speed: number
+  physicalResist: number
+  magicResist: number
+  reward: number
+  curseInterval?: number
+  curseDuration?: number
+  curseRange?: number
+}
+
+const ENEMY_CFG = enemiesConfig as Record<EnemyType, EnemyConfig>
 
 const SPRITE_CFG: Record<EnemyType, { scale: number; tint?: number }> = {
   goblin: { scale: 1.6 },
@@ -14,7 +28,7 @@ const SPRITE_CFG: Record<EnemyType, { scale: number; tint?: number }> = {
   boss:   { scale: 0.18 },
 }
 
-export class Enemy extends Phaser.GameObjects.GameObject {
+export class Enemy extends Phaser.GameObjects.GameObject implements Damageable {
   x: number
   y: number
   health: number
@@ -45,7 +59,7 @@ export class Enemy extends Phaser.GameObjects.GameObject {
   constructor(scene: Phaser.Scene, type: EnemyType, waypoints: Point[], healthMultiplier: number = 1) {
     super(scene, 'Enemy')
     this.enemyType = type
-    const cfg = enemiesConfig[type] as any
+    const cfg = ENEMY_CFG[type]
 
     const scaledHealth = Math.round(cfg.health * healthMultiplier)
     this.health    = scaledHealth
@@ -57,9 +71,9 @@ export class Enemy extends Phaser.GameObjects.GameObject {
     this.waypoints = waypoints
 
     if (type === 'shaman') {
-      this.curseInterval = cfg.curseInterval
-      this.curseDuration = cfg.curseDuration
-      this.curseRange    = cfg.curseRange
+      this.curseInterval = cfg.curseInterval ?? 0
+      this.curseDuration = cfg.curseDuration ?? 0
+      this.curseRange    = cfg.curseRange    ?? 0
     }
 
     const start = waypoints[0]
@@ -71,7 +85,7 @@ export class Enemy extends Phaser.GameObjects.GameObject {
     this.sprite = scene.add.sprite(start.x, start.y, texKey)
     this.sprite.setScale(sc.scale).setDepth(10)
     if (sc.tint) this.sprite.setTint(sc.tint)
-    
+
     const animKey = type === 'boss' ? 'boss_walk' : 'orc_walk'
     this.sprite.play(animKey)
 
@@ -104,7 +118,7 @@ export class Enemy extends Phaser.GameObjects.GameObject {
         EventBus.emit(Events.SHAMAN_CURSE, {
           x: this.x, y: this.y,
           range: this.curseRange,
-          duration: this.curseDuration
+          duration: this.curseDuration,
         })
       }
     }
@@ -113,13 +127,12 @@ export class Enemy extends Phaser.GameObjects.GameObject {
     if (!target) return
 
     const isSlowed = time < this.slowUntil
-    const effectiveSpeed = isSlowed ? this.speed * 0.45 : this.speed
+    const effectiveSpeed = isSlowed ? this.speed * SLOW_SPEED_MULTIPLIER : this.speed
     const dx = target.x - this.x
     const dy = target.y - this.y
     const dist = Math.sqrt(dx * dx + dy * dy)
     const step = (effectiveSpeed * delta) / 1000
 
-    // flip sprite to face movement direction
     if (Math.abs(dx) > 1) this.sprite.setFlipX(dx < 0)
 
     if (dist <= step) {
@@ -138,7 +151,6 @@ export class Enemy extends Phaser.GameObjects.GameObject {
 
     this.sprite.setPosition(this.x, this.y)
     this.drawHealthBar()
-
     this.effectGraphics.clear()
   }
 
@@ -181,8 +193,7 @@ export class Enemy extends Phaser.GameObjects.GameObject {
       this.sprite.once('animationcomplete', () => {
         if (this.sprite?.active) this.sprite.destroy()
       })
-      // fallback cleanup in case animation never fires
-      scene?.time.delayedCall(900, () => {
+      scene?.time.delayedCall(ENEMY_DEATH_CLEANUP_MS, () => {
         if (this.sprite?.active) this.sprite.destroy()
       })
     }

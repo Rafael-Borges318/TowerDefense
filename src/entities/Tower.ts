@@ -1,18 +1,45 @@
 import Phaser from 'phaser'
-import type { ITargetingStrategy, EnemyLike } from '../patterns/TargetingStrategy'
+import type { ITargetingStrategy, EnemyLike, Damageable, GameSceneLike } from '../patterns/TargetingStrategy'
 import { NearestTargeting } from '../patterns/TargetingStrategy'
 import { Projectile } from './Projectile'
 import towersConfig from '../config/towers.json'
 import { ProgressManager } from '../managers/ProgressManager'
+import {
+  MAGE_SLOW_ZONE_RADIUS,
+  MAGE_SLOW_ZONE_DURATION,
+  SLOW_EFFECT_REFRESH_MS,
+} from '../constants/game'
 
 export type TowerType = 'archer' | 'mage' | 'mortar'
 export type FiringMode = 'heavy' | 'normal' | 'rapid'
 
 export const FIRING_MODES: Record<FiringMode, { damageMult: number; rateMult: number; label: string; desc: string; color: string }> = {
-  heavy:  { damageMult: 1.8, rateMult: 1.75, label: '⚡ Potente', desc: '+80% dano / −cadência',  color: '#ff9944' },
-  normal: { damageMult: 1.0, rateMult: 1.00, label: '⚖ Normal',  desc: 'Padrão',                   color: '#aaaacc' },
+  heavy:  { damageMult: 1.8,  rateMult: 1.75, label: '⚡ Potente', desc: '+80% dano / −cadência',  color: '#ff9944' },
+  normal: { damageMult: 1.0,  rateMult: 1.00, label: '⚖ Normal',  desc: 'Padrão',                  color: '#aaaacc' },
   rapid:  { damageMult: 0.55, rateMult: 0.45, label: '💨 Rápido', desc: '+cadência / −45% dano',   color: '#44aaff' },
 }
+
+export interface TowerLevel {
+  cost: number
+  upgradeCost: number
+  damage: number
+  fireRate: number
+  range: number
+  aoeRadius?: number
+  special?: string
+  bodyColor: string
+  accentColor: string
+  width: number
+  height: number
+  label: string
+}
+
+export interface TowerDef {
+  damageType: 'physical' | 'magic'
+  levels: TowerLevel[]
+}
+
+export const TOWERS_CFG = towersConfig as Record<TowerType, TowerDef>
 
 export class Tower extends Phaser.GameObjects.GameObject {
   x: number
@@ -45,25 +72,25 @@ export class Tower extends Phaser.GameObjects.GameObject {
     this.investedGold = cfg.cost
 
     this.disruptGraphics = scene.add.graphics()
-    this.rangeGraphics = scene.add.graphics()
-    this.graphics = scene.add.graphics()
+    this.rangeGraphics   = scene.add.graphics()
+    this.graphics        = scene.add.graphics()
 
     if (this.type === 'archer' && scene.textures.exists('torre_arqueiro')) {
-      this.archerImage = scene.add.image(x, y, this.archerTextureKey()).setDisplaySize(100, 100).setDepth(10)
+      this.archerImage = scene.add.image(x, y, this.textureKey('torre_arqueiro')).setDisplaySize(100, 100).setDepth(10)
     }
     if (this.type === 'mage' && scene.textures.exists('torre_mago')) {
-      this.magoImage = scene.add.image(x, y, this.magoTextureKey()).setDisplaySize(100, 100).setDepth(10)
+      this.magoImage = scene.add.image(x, y, this.textureKey('torre_mago')).setDisplaySize(100, 100).setDepth(10)
     }
     if (this.type === 'mortar' && scene.textures.exists('torre_morteiro')) {
-      this.morteiroImage = scene.add.image(x, y, this.morteiroTextureKey()).setDisplaySize(90, 90).setDepth(10)
+      this.morteiroImage = scene.add.image(x, y, this.textureKey('torre_morteiro')).setDisplaySize(90, 90).setDepth(10)
     }
 
     this.draw()
     scene.sys.updateList.add(this)
   }
 
-  private getBaseCfg() {
-    return (towersConfig as any)[this.type].levels[this.level - 1]
+  private getBaseCfg(): TowerLevel {
+    return TOWERS_CFG[this.type].levels[this.level - 1]
   }
 
   private getStats() {
@@ -74,18 +101,24 @@ export class Tower extends Phaser.GameObjects.GameObject {
     const mode = FIRING_MODES[this.firingMode]
     return {
       ...cfg,
-      damage:    Math.floor(cfg.damage * dmgMult * mode.damageMult),
-      fireRate:  Math.floor(cfg.fireRate * mode.rateMult),
-      aoeRadius: cfg.aoeRadius ? Math.floor(cfg.aoeRadius * aoeMult) : 0,
-      damageType: (towersConfig as any)[this.type].damageType as 'physical' | 'magic',
+      damage:     Math.floor(cfg.damage * dmgMult * mode.damageMult),
+      fireRate:   Math.floor(cfg.fireRate * mode.rateMult),
+      aoeRadius:  cfg.aoeRadius ? Math.floor(cfg.aoeRadius * aoeMult) : 0,
+      damageType: TOWERS_CFG[this.type].damageType,
     }
+  }
+
+  private textureKey(base: string): string {
+    if (this.level === 2) return `${base}_2`
+    if (this.level === 3) return `${base}_3`
+    return base
   }
 
   private draw(disrupted: boolean = false) {
     const cfg = this.getBaseCfg()
-    const body = Number(cfg.bodyColor)
+    const body   = Number(cfg.bodyColor)
     const accent = Number(cfg.accentColor)
-    const hw = cfg.width / 2
+    const hw = cfg.width  / 2
     const hh = cfg.height / 2
     const bx = this.x - hw
     const by = this.y - hh
@@ -98,9 +131,9 @@ export class Tower extends Phaser.GameObjects.GameObject {
       this.graphics.lineStyle(2, accent, 1)
       this.graphics.strokeRect(bx, by, cfg.width, cfg.height)
 
-      if (this.type === 'archer') this.drawArcher(bx, by, cfg, accent)
-      else if (this.type === 'mage') this.drawMage(bx, by, cfg, accent)
-      else this.drawMortar(bx, by, cfg, accent)
+      if (this.type === 'archer')      this.drawArcher(bx, by, cfg, accent)
+      else if (this.type === 'mage')   this.drawMage(bx, by, cfg, accent)
+      else                             this.drawMortar(bx, by, cfg, accent)
     }
 
     this.disruptGraphics.clear()
@@ -112,45 +145,31 @@ export class Tower extends Phaser.GameObjects.GameObject {
     }
   }
 
-  private drawArcher(bx: number, by: number, cfg: any, accent: number) {
-    // Arrow indicator pointing up
+  private drawArcher(bx: number, by: number, cfg: TowerLevel, accent: number) {
     this.graphics.fillStyle(accent)
-    this.graphics.fillTriangle(
-      this.x, by - 8,
-      this.x - 5, by,
-      this.x + 5, by
-    )
+    this.graphics.fillTriangle(this.x, by - 8, this.x - 5, by, this.x + 5, by)
 
     if (this.level === 2) {
-      // bow arc
       this.graphics.lineStyle(2, accent)
       this.graphics.beginPath()
       this.graphics.arc(this.x, by - 6, 8, Math.PI * 1.2, Math.PI * 1.8)
       this.graphics.strokePath()
     }
     if (this.level === 3) {
-      // triple arrows
       for (let i = -1; i <= 1; i++) {
         this.graphics.fillStyle(accent)
-        this.graphics.fillTriangle(
-          this.x + i * 6, by - 10,
-          this.x + i * 6 - 3, by - 4,
-          this.x + i * 6 + 3, by - 4
-        )
+        this.graphics.fillTriangle(this.x + i * 6, by - 10, this.x + i * 6 - 3, by - 4, this.x + i * 6 + 3, by - 4)
       }
-      // gold trim
       this.graphics.lineStyle(1, 0xFFD700)
       this.graphics.strokeRect(bx + 2, by + 2, cfg.width - 4, cfg.height - 4)
     }
   }
 
-  private drawMage(bx: number, by: number, cfg: any, accent: number) {
-    // orb on top
+  private drawMage(bx: number, by: number, cfg: TowerLevel, accent: number) {
     this.graphics.fillStyle(accent, 0.9)
     this.graphics.fillCircle(this.x, by - 6, this.level === 3 ? 8 : 6)
 
     if (this.level === 2) {
-      // star shape (6 lines)
       this.graphics.lineStyle(1, accent)
       for (let i = 0; i < 6; i++) {
         const a = (i / 6) * Math.PI * 2
@@ -161,43 +180,28 @@ export class Tower extends Phaser.GameObjects.GameObject {
       }
     }
     if (this.level === 3) {
-      // orbiting particles (drawn at fixed angle since it's static)
       this.graphics.fillStyle(0x00FFFF, 0.8)
       for (let i = 0; i < 4; i++) {
         const a = (i / 4) * Math.PI * 2
-        this.graphics.fillCircle(
-          this.x + Math.cos(a) * 16,
-          this.y + Math.sin(a) * 16,
-          3
-        )
+        this.graphics.fillCircle(this.x + Math.cos(a) * 16, this.y + Math.sin(a) * 16, 3)
       }
-      // crystal trim
       this.graphics.lineStyle(1, 0x00FFFF, 0.6)
       this.graphics.strokeRect(bx + 2, by + 2, cfg.width - 4, cfg.height - 4)
     }
   }
 
-  private drawMortar(bx: number, by: number, _cfg: any, accent: number) {
-    // barrel angled to upper-right
+  private drawMortar(bx: number, by: number, cfg: TowerLevel, accent: number) {
     this.graphics.fillStyle(accent)
     const barrelLen = 10 + this.level * 3
-    this.graphics.fillRect(
-      this.x - 4,
-      by - barrelLen,
-      8,
-      barrelLen
-    )
+    this.graphics.fillRect(this.x - 4, by - barrelLen, 8, barrelLen)
 
     if (this.level >= 2) {
-      // reinforcement ring
       this.graphics.lineStyle(3, accent)
-      this.graphics.strokeRect(bx + 3, by + 3, _cfg.width - 6, 6)
+      this.graphics.strokeRect(bx + 3, by + 3, cfg.width - 6, 6)
     }
     if (this.level === 3) {
-      // flame glow
       this.graphics.fillStyle(0xFF4500, 0.5)
       this.graphics.fillCircle(this.x, by, 8)
-      // explosive tip
       this.graphics.fillStyle(0xFFD700)
       this.graphics.fillCircle(this.x, by - barrelLen - 4, 5)
     }
@@ -220,39 +224,16 @@ export class Tower extends Phaser.GameObjects.GameObject {
     })
   }
 
-  private archerTextureKey(): string {
-    if (this.level === 2) return 'torre_arqueiro_2'
-    if (this.level === 3) return 'torre_arqueiro_3'
-    return 'torre_arqueiro'
-  }
-
-  private magoTextureKey(): string {
-    if (this.level === 2) return 'torre_mago_2'
-    if (this.level === 3) return 'torre_mago_3'
-    return 'torre_mago'
-  }
-
-  private morteiroTextureKey(): string {
-    if (this.level === 2) return 'torre_morteiro_2'
-    if (this.level === 3) return 'torre_morteiro_3'
-    return 'torre_morteiro'
-  }
-
-  private morteiroDisplaySize(): number {
-    return 90
-  }
-
   upgrade(): number {
     if (this.level >= 3) return 0
     const cost = this.getBaseCfg().upgradeCost
     this.investedGold += cost
     this.level++
-    if (this.archerImage) this.archerImage.setTexture(this.archerTextureKey())
-    if (this.magoImage) this.magoImage.setTexture(this.magoTextureKey())
+    if (this.archerImage)   this.archerImage.setTexture(this.textureKey('torre_arqueiro'))
+    if (this.magoImage)     this.magoImage.setTexture(this.textureKey('torre_mago'))
     if (this.morteiroImage) {
-      this.morteiroImage.setTexture(this.morteiroTextureKey())
-      const s = this.morteiroDisplaySize()
-      this.morteiroImage.setDisplaySize(s, s)
+      this.morteiroImage.setTexture(this.textureKey('torre_morteiro'))
+      this.morteiroImage.setDisplaySize(90, 90)
     }
     this.draw()
     return cost
@@ -272,22 +253,17 @@ export class Tower extends Phaser.GameObjects.GameObject {
   preUpdate(time: number, _delta: number) {
     if (!this.active) return
 
-    // Atualiza zona de slow independente da cadência de disparo
     if (this.slowZone) {
       if (time >= this.slowZone.until) {
         this.slowZone.graphics.destroy()
         this.slowZone = null
       } else {
-        const scene = this.scene as any
-        const enemies: EnemyLike[] = scene.getEnemies ? scene.getEnemies() : []
+        const enemies = (this.scene as GameSceneLike).getEnemies?.() ?? []
         for (const e of enemies) {
           const dx = e.x - this.slowZone.x
           const dy = e.y - this.slowZone.y
           if (Math.sqrt(dx * dx + dy * dy) <= this.slowZone.radius) {
-            const enemy = e as any
-            if (typeof enemy.applyEffect === 'function') {
-              enemy.applyEffect('slow', 150)
-            }
+            e.applyEffect('slow', SLOW_EFFECT_REFRESH_MS)
           }
         }
       }
@@ -298,8 +274,7 @@ export class Tower extends Phaser.GameObjects.GameObject {
     const cfg = this.getStats()
     if (time - this.lastFiredAt < cfg.fireRate) return
 
-    const scene = this.scene as any
-    const enemies: EnemyLike[] = scene.getEnemies ? scene.getEnemies() : []
+    const enemies: EnemyLike[] = (this.scene as GameSceneLike).getEnemies?.() ?? []
     const inRange = enemies.filter(e => {
       const dx = e.x - this.x
       const dy = e.y - this.y
@@ -311,19 +286,17 @@ export class Tower extends Phaser.GameObjects.GameObject {
 
     this.lastFiredAt = time
 
-    // Cria zona de slow no mago quando não há zona ativa
     if (cfg.special === 'slow' && !this.slowZone) {
-      const radius = 85
       const g = this.scene.add.graphics().setDepth(5)
       g.fillStyle(0x88eeff, 0.22)
-      g.fillCircle(primary.x, primary.y, radius)
+      g.fillCircle(primary.x, primary.y, MAGE_SLOW_ZONE_RADIUS)
       g.lineStyle(2, 0xaaf0ff, 0.6)
-      g.strokeCircle(primary.x, primary.y, radius)
-      this.slowZone = { graphics: g, x: primary.x, y: primary.y, radius, until: time + 3500 }
+      g.strokeCircle(primary.x, primary.y, MAGE_SLOW_ZONE_RADIUS)
+      this.slowZone = { graphics: g, x: primary.x, y: primary.y, radius: MAGE_SLOW_ZONE_RADIUS, until: time + MAGE_SLOW_ZONE_DURATION }
     }
 
     const spawnX = this.x
-    const spawnY = this.archerImage ? this.y - 22
+    const spawnY = this.archerImage  ? this.y - 22
                  : this.morteiroImage ? this.y - 32
                  : this.y
 
@@ -339,10 +312,10 @@ export class Tower extends Phaser.GameObjects.GameObject {
       }
       if (targets.length === 0) targets.push(primary)
       for (const t of targets) {
-        new Projectile(this.scene, spawnX, spawnY, t, cfg.damage, { damageType: cfg.damageType, useArrow: this.type === 'archer' })
+        new Projectile(this.scene, spawnX, spawnY, t as Damageable, cfg.damage, { damageType: cfg.damageType, useArrow: this.type === 'archer' })
       }
     } else {
-      new Projectile(this.scene, spawnX, spawnY, primary, cfg.damage, {
+      new Projectile(this.scene, spawnX, spawnY, primary as Damageable, cfg.damage, {
         damageType: cfg.damageType,
         slowDuration: 0,
         aoeRadius: cfg.special === 'aoe' ? cfg.aoeRadius : 0,

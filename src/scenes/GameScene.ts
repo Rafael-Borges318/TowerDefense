@@ -5,10 +5,9 @@ import { GameManager } from '../managers/GameManager'
 import { EconomyManager } from '../managers/EconomyManager'
 import { ProgressManager } from '../managers/ProgressManager'
 import { EventBus, Events } from '../events/EventBus'
-import { Tower, type TowerType, type FiringMode, FIRING_MODES } from '../entities/Tower'
-import type { EnemyLike } from '../patterns/TargetingStrategy'
+import { Tower, type TowerType, type FiringMode, FIRING_MODES, TOWERS_CFG } from '../entities/Tower'
+import type { Damageable } from '../patterns/TargetingStrategy'
 import { NearestTargeting, StrongestTargeting, FirstTargeting } from '../patterns/TargetingStrategy'
-import towersConfig from '../config/towers.json'
 
 interface Point { x: number; y: number }
 interface TowerSlot {
@@ -239,16 +238,16 @@ export class GameScene extends Phaser.Scene {
 
     if (this.phase === 1) {
       this.add.image(400, 280, 'map_fase1').setDisplaySize(800, 560)
-      this.drawPhase1Markers()
+      this.drawMapMarkers(WAYPOINTS_P1)
     } else if (this.phase === 2) {
       this.add.image(400, 280, 'map_fase2').setDisplaySize(800, 560)
-      this.drawPhase2Markers()
+      this.drawMapMarkers(WAYPOINTS_P2, 'down')
     } else if (this.phase === 3) {
       this.add.image(400, 280, 'map_fase3').setDisplaySize(800, 560)
-      this.drawMarkersForPhase(WAYPOINTS_P3)
+      this.drawMapMarkers(WAYPOINTS_P3)
     } else if (this.phase === 4) {
       this.add.image(400, 280, 'map_fase4').setDisplaySize(800, 560)
-      this.drawMarkersForPhase(WAYPOINTS_P4)
+      this.drawMapMarkers(WAYPOINTS_P4)
     } else {
       this.drawBackground()
       this.drawPath()
@@ -440,48 +439,23 @@ export class GameScene extends Phaser.Scene {
     this.add.text(last.x, last.y - 32, '🏰', { fontSize: '24px' }).setOrigin(0.5)
   }
 
-  private drawPhase1Markers() {
+  private drawMapMarkers(waypoints: Point[], entryDir: 'right' | 'down' = 'right') {
     const g = this.add.graphics()
-
-    // Entry marker — left edge
-    const start = WAYPOINTS_P1[0]
-    g.fillStyle(0x003300, 0.75); g.fillCircle(start.x + 20, start.y, 16)
-    g.lineStyle(3, 0x00ff44, 0.9); g.strokeCircle(start.x + 20, start.y, 16)
-    this.add.text(start.x + 20, start.y, '▶', { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
-
-    // Castle marker — bottom exit
-    const exitX = WAYPOINTS_P1[WAYPOINTS_P1.length - 1].x
-    g.fillStyle(0x220000, 0.75); g.fillCircle(exitX, 543, 16)
-    g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(exitX, 543, 16)
-    this.add.text(exitX, 508, '🏰', { fontSize: '24px' }).setOrigin(0.5)
-  }
-
-  private drawPhase2Markers() {
-    const g = this.add.graphics()
-
-    const start = WAYPOINTS_P2[0]
-    g.fillStyle(0x003300, 0.75); g.fillCircle(start.x, start.y + 20, 16)
-    g.lineStyle(3, 0x00ff44, 0.9); g.strokeCircle(start.x, start.y + 20, 16)
-    this.add.text(start.x, start.y + 20, '▼', { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
-
-    const exitX = WAYPOINTS_P2[WAYPOINTS_P2.length - 1].x
-    g.fillStyle(0x220000, 0.75); g.fillCircle(exitX, 20, 16)
-    g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(exitX, 20, 16)
-    this.add.text(exitX, 52, '🏰', { fontSize: '24px' }).setOrigin(0.5)
-  }
-
-  private drawMarkersForPhase(waypoints: Point[]) {
-    const g = this.add.graphics()
-
     const start = waypoints[0]
-    g.fillStyle(0x003300, 0.75); g.fillCircle(start.x + 20, start.y, 16)
-    g.lineStyle(3, 0x00ff44, 0.9); g.strokeCircle(start.x + 20, start.y, 16)
-    this.add.text(start.x + 20, start.y, '▶', { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
+    const last  = waypoints[waypoints.length - 1]
 
-    const last = waypoints[waypoints.length - 1]
-    g.fillStyle(0x220000, 0.75); g.fillCircle(last.x, last.y - 20, 16)
-    g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(last.x, last.y - 20, 16)
-    this.add.text(last.x, last.y - 52, '🏰', { fontSize: '24px' }).setOrigin(0.5)
+    const ex     = entryDir === 'down' ? start.x      : start.x + 20
+    const ey     = entryDir === 'down' ? start.y + 20 : start.y
+    const arrow  = entryDir === 'down' ? '▼' : '▶'
+    g.fillStyle(0x003300, 0.75); g.fillCircle(ex, ey, 16)
+    g.lineStyle(3, 0x00ff44, 0.9); g.strokeCircle(ex, ey, 16)
+    this.add.text(ex, ey, arrow, { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
+
+    const cy = last.y < 0 ? 20  : last.y > 540 ? 543 : last.y - 20
+    const ty = last.y < 0 ? cy + 35 : cy - 35
+    g.fillStyle(0x220000, 0.75); g.fillCircle(last.x, cy, 16)
+    g.lineStyle(3, 0xff4444, 0.9); g.strokeCircle(last.x, cy, 16)
+    this.add.text(last.x, ty, '🏰', { fontSize: '24px' }).setOrigin(0.5)
   }
 
   private createSlots(positions: Point[]) {
@@ -702,7 +676,7 @@ export class GameScene extends Phaser.Scene {
     this.popup!.add(this.add.text(0, 3, 'Construir Torre', { fontSize: '13px', color: '#aaddff', fontStyle: 'bold' }))
 
     types.forEach((type, i) => {
-      const cfg = (towersConfig as any)[type].levels[0]
+      const cfg = TOWERS_CFG[type].levels[0]
       const cost = cfg.cost
       const canBuild = em.canAfford(cost)
       const label = `${TOWER_LABELS[type]}  ${cost}💰`
@@ -791,7 +765,7 @@ export class GameScene extends Phaser.Scene {
     if (lvl < 3) {
       const upgCost = tower.getUpgradeCost()
       const canUpg = em.canAfford(upgCost)
-      const nextCfg = (towersConfig as any)[tower.type].levels[lvl]
+      const nextCfg = TOWERS_CFG[tower.type].levels[lvl]
       const special = nextCfg.special ? ` ✨ ${nextCfg.special}` : ''
       const upgBtn = this.add.text(0, 188, `⬆ Nv.${lvl + 1}${special} (${upgCost}💰)`, {
         fontSize: '12px', color: canUpg ? '#44ff88' : '#886644',
@@ -807,7 +781,7 @@ export class GameScene extends Phaser.Scene {
       }
       this.popup!.add(upgBtn)
     } else {
-      const cfg = (towersConfig as any)[tower.type].levels[2]
+      const cfg = TOWERS_CFG[tower.type].levels[2]
       this.popup!.add(this.add.text(0, 188, `✨ Poder: ${cfg.special ?? '—'}`, { fontSize: '12px', color: '#ffcc00' }))
       this.popup!.add(this.add.text(0, 207, '★ Nível máximo', { fontSize: '11px', color: '#ffcc44' }))
     }
@@ -975,8 +949,8 @@ export class GameScene extends Phaser.Scene {
     this.scene.pause()
   }
 
-  getEnemies(): EnemyLike[] {
-    return this.waveManager?.getEnemies() ?? []
+  getEnemies(): Damageable[] {
+    return (this.waveManager?.getEnemies() ?? []) as Damageable[]
   }
 
   shutdown() {
