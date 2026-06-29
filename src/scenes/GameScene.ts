@@ -1,4 +1,6 @@
 import Phaser from 'phaser'
+import { BaseScene } from './BaseScene'
+import type { CodexTab } from '../data/codexData'
 import { TowerFactory } from '../factories/TowerFactory'
 import { WaveManager } from '../managers/WaveManager'
 import { GameManager } from '../managers/GameManager'
@@ -46,102 +48,94 @@ const SLOT_POSITIONS_P1: Point[] = [
 
 // ── Fase 2 — (fase2pixel.png) ──
 const WAYPOINTS_P2: Point[] = [
-  { x: 120, y: 0   },
-  { x: 120, y: 480 },
-  { x: 60,  y: 480 },
-  { x: 60,  y: 80  },
-  { x: 700, y: 80  },
-  { x: 700, y: 400 },
-  { x: 200, y: 400 },
-  { x: 200, y: 160 },
-  { x: 620, y: 160 },
-  { x: 620, y: 340 },
-  { x: 300, y: 340 },
-  { x: 300, y: 240 },
-  { x: 520, y: 240 },
-  { x: 520, y: 300 },
-  { x: 360, y: 300 },
-  { x: 360, y: -30 },
+  { x: 375, y: 0   },
+  { x: 375, y: 160 },
+  { x: 125,  y: 160 },
+  { x: 125,  y: 80  },
+  { x: 230, y: 80  },
+  { x: 230, y: 480 },
+  { x: 125, y: 480 },
+  { x: 125, y: 380 },
+  { x: 670, y: 380 },
+  { x: 670, y: 480 },
+  { x: 580, y: 480 },
+  { x: 580, y: 80 },
+  { x: 665, y: 80 },
+  { x: 665, y: 160 },
+  { x: 430, y: 160 },
+  { x: 430, y: -30 },
 ]
 
 const SLOT_POSITIONS_P2: Point[] = [
-  { x: 400, y: 130 },
+  { x: 400, y: 210 },
   { x: 160, y: 310 },
   { x: 640, y: 290 },
   { x: 400, y: 450 },
 ]
 
-// ── Fase 3 ──
+// ── Fase 3 — entrada topo-esquerda, saída direita ──
+// Trajeto: ↓ → ↑ ← ↓ → ↓ ← ↑ → ↓ →(saída)
 const WAYPOINTS_P3: Point[] = [
-  { x: 0,   y: 100 },
-  { x: 200, y: 100 },
-  { x: 200, y: 250 },
-  { x: 100, y: 250 },
-  { x: 100, y: 400 },
-  { x: 350, y: 400 },
-  { x: 350, y: 150 },
-  { x: 550, y: 150 },
-  { x: 550, y: 350 },
-  { x: 450, y: 350 },
-  { x: 450, y: 480 },
-  { x: 700, y: 480 },
-  { x: 700, y: 250 },
-  { x: 800, y: 250 }
+  { x: 110,  y: 0   },  // entrada topo
+  { x: 110,  y: 200 },  // ↓ baixo
+  { x: 385, y: 200 },  // → direita
+  { x: 385, y: 110  },  // ↑ cima
+  { x: 265, y: 110  },  // ← esquerda
+  { x: 265, y: 320 },  // ↓ baixo
+  { x: 565, y: 320 },  // → direita
+  { x: 565, y: 420 },  // ↓ baixo
+  { x: 455, y: 420 },  // ← esquerda
+  { x: 455, y: 200 },  // ↑ cima
+  { x: 690, y: 200 },  // → direita
+  { x: 690, y: 430 },  // ↓ baixo
+  { x: 790, y: 430 },  // → saída direita
 ]
 
 const SLOT_POSITIONS_P3: Point[] = [
-  { x: 100, y: 180 },
-  { x: 250, y: 320 },
-  { x: 450, y: 220 },
-  { x: 400, y: 450 },
-  { x: 620, y: 250 },
-  { x: 620, y: 420 },
-  { x: 750, y: 150 }
-]
+  { x: 470, y: 150 },  // cobre horizontal y=60 e y=180
+  { x: 190, y: 150 },  // cobre x=150 vertical e y=180
+  { x: 400, y: 400 },  // cobre y=380 e y=500
+  { x: 760, y: 280 },  // cobre y=380 e y=500
+] 
 
-// ── Fase 4 ──
+// ── Fase 4 — cobra, entrada esquerda-baixo, saída direita ──
+// Trajeto: → ↑ → ↓ → ↑ → ↓ → ↑ → ↓ → ↑ → ↓ → ↑ → ↓ → ↑ → ↓ →(saída)
 const WAYPOINTS_P4: Point[] = [
-  { x: 0,   y: 450 },
-  { x: 150, y: 450 },
-  { x: 150, y: 200 },
-  { x: 300, y: 200 },
-  { x: 300, y: 450 },
-  { x: 450, y: 450 },
-  { x: 450, y: 100 },
-  { x: 600, y: 100 },
-  { x: 600, y: 350 },
-  { x: 700, y: 350 },
-  { x: 700, y: 560 }
+   { x: 0,   y: 320 },  // entrada esquerda
+  { x: 40,  y: 320 },  // → direita
+  { x: 40,  y: 260  },  // ↑ cima
+  { x: 110, y: 260  },  // → direita
+  { x: 110, y: 370 },  // ↓ baixo
+  { x: 180, y: 370 },  // → direita
+  { x: 180, y: 190  },  // ↑ cima
+  { x: 235, y: 190  },  // → direita
+  { x: 235, y: 420 },  // ↓ baixo
+  { x: 310, y: 420 },  // → direita
+  { x: 310, y: 115  },  // ↑ cima
+  { x: 365, y: 115  },  // → direita
+  { x: 365, y: 480 },  // ↓ baixo
+  { x: 435, y: 480 },  // → direita
+  { x: 435, y: 110  },  // ↑ cima
+  { x: 490, y: 110  },  // → direita
+  { x: 490, y: 420 },  // ↓ baixo
+  { x: 565, y: 420 },  // → direita
+  { x: 565, y: 180  },  // ↑ cima
+  { x: 625, y: 180  },  // → direita
+  { x: 625, y: 375 },  // ↓ baixo
+  { x: 695, y: 375 },  // → direita
+  { x: 695, y: 265  },  // ↑ cima
+  { x: 750, y: 265  },  // → direita
+  { x: 750, y: 320 },  // ↓ baixo
+  { x: 800, y: 320 },  // → saída direita
 ]
 
 const SLOT_POSITIONS_P4: Point[] = [
-  { x: 80,  y: 350 },
-  { x: 220, y: 300 },
-  { x: 380, y: 320 },
-  { x: 520, y: 250 },
-  { x: 520, y: 480 },
-  { x: 650, y: 200 },
-  { x: 750, y: 450 }
+  { x: 100,  y: 200 },  // entre colunas x=60 e x=120
+  { x: 320, y: 480 },  // entre colunas x=300 e x=360
+  { x: 475, y: 75 },  // entre colunas x=480 e x=540
+  { x: 740, y: 390 },  // entre coluna x=720 e saída
 ]
 
-// ── Fases 5+ — mapa procedural ──
-const WAYPOINTS: Point[] = [
-  { x: 50,  y: 300 },
-  { x: 200, y: 300 },
-  { x: 200, y: 150 },
-  { x: 400, y: 150 },
-  { x: 400, y: 420 },
-  { x: 600, y: 420 },
-  { x: 600, y: 200 },
-  { x: 760, y: 200 },
-]
-
-const SLOT_POSITIONS: Point[] = [
-  { x: 300, y: 80  },
-  { x: 500, y: 290 },
-  { x: 690, y: 320 },
-  { x: 120, y: 375 },
-]
 
 const TOWER_LABELS: Record<TowerType, string> = {
   archer: 'Arqueiro',
@@ -149,7 +143,7 @@ const TOWER_LABELS: Record<TowerType, string> = {
   mortar: 'Morteiro',
 }
 
-export class GameScene extends Phaser.Scene {
+export class GameScene extends BaseScene {
   private slots: TowerSlot[] = []
   private waveManager!: WaveManager
   private phase: number = 1
@@ -226,13 +220,11 @@ export class GameScene extends Phaser.Scene {
     const waypoints = this.phase === 1 ? WAYPOINTS_P1
                     : this.phase === 2 ? WAYPOINTS_P2
                     : this.phase === 3 ? WAYPOINTS_P3
-                    : this.phase === 4 ? WAYPOINTS_P4
-                    : WAYPOINTS
+                    : WAYPOINTS_P4
     const slotPositions = this.phase === 1 ? SLOT_POSITIONS_P1
                         : this.phase === 2 ? SLOT_POSITIONS_P2
                         : this.phase === 3 ? SLOT_POSITIONS_P3
-                        : this.phase === 4 ? SLOT_POSITIONS_P4
-                        : SLOT_POSITIONS
+                        : SLOT_POSITIONS_P4
 
     this.waveManager = new WaveManager(this, waypoints, this.phase)
 
@@ -245,12 +237,9 @@ export class GameScene extends Phaser.Scene {
     } else if (this.phase === 3) {
       this.add.image(400, 280, 'map_fase3').setDisplaySize(800, 560)
       this.drawMapMarkers(WAYPOINTS_P3)
-    } else if (this.phase === 4) {
+    } else {
       this.add.image(400, 280, 'map_fase4').setDisplaySize(800, 560)
       this.drawMapMarkers(WAYPOINTS_P4)
-    } else {
-      this.drawBackground()
-      this.drawPath()
     }
     this.createSlots(slotPositions)
     this.createHUD()
@@ -267,176 +256,6 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-ESC', this.openPause, this)
     this.createCodexButton()
     this.refreshHUD()
-  }
-
-  private drawBackground() {
-    const g = this.add.graphics()
-
-    // Base grass gradient
-    g.fillGradientStyle(0x1e3a0e, 0x1e3a0e, 0x0d2206, 0x0d2206, 1)
-    g.fillRect(0, 0, 800, 560)
-
-    // Multi-shade grass patches for texture
-    const rng = new Phaser.Math.RandomDataGenerator(['td-map'])
-    const grassShades = [0x1a3509, 0x224410, 0x2a5214, 0x163008]
-    for (let i = 0; i < 220; i++) {
-      const gx = rng.integerInRange(0, 795)
-      const gy = rng.integerInRange(0, 555)
-      g.fillStyle(grassShades[i % grassShades.length], rng.realInRange(0.25, 0.55))
-      g.fillEllipse(gx, gy, rng.integerInRange(14, 38), rng.integerInRange(8, 22))
-    }
-
-    // Rock clusters (grey ovals)
-    const rockAreas = [
-      [60, 80], [330, 60], [700, 70], [70, 470], [730, 470],
-      [460, 310], [150, 200], [640, 350],
-    ]
-    for (const [rx, ry] of rockAreas) {
-      g.fillStyle(0x445544, 0.7)
-      g.fillEllipse(rx, ry, 22, 14)
-      g.fillStyle(0x556655, 0.5)
-      g.fillEllipse(rx + 10, ry + 4, 14, 9)
-      g.fillStyle(0x334433, 0.5)
-      g.fillEllipse(rx - 8, ry + 5, 12, 8)
-    }
-
-    this.drawTrees(g)
-  }
-
-  private drawTrees(g: Phaser.GameObjects.Graphics) {
-    // Trees in safe zones (away from the path)
-    const treeSets: Array<{ x: number; y: number; size: number }> = [
-      // top-left cluster
-      { x: 55,  y: 50,  size: 20 }, { x: 90,  y: 40,  size: 16 }, { x: 35,  y: 70,  size: 18 },
-      { x: 120, y: 60,  size: 14 }, { x: 70,  y: 90,  size: 15 },
-      // top-center cluster (between x200 vertical and x400 vertical, above y130)
-      { x: 295, y: 50,  size: 18 }, { x: 330, y: 35,  size: 15 }, { x: 260, y: 65,  size: 14 },
-      { x: 355, y: 62,  size: 16 }, { x: 310, y: 88,  size: 13 },
-      // top-right cluster
-      { x: 660, y: 45,  size: 18 }, { x: 700, y: 30,  size: 15 }, { x: 740, y: 55,  size: 16 },
-      // bottom-left
-      { x: 60,  y: 460, size: 17 }, { x: 100, y: 480, size: 14 }, { x: 40,  y: 500, size: 16 },
-      // bottom-center (below y438, x400-600)
-      { x: 480, y: 480, size: 15 }, { x: 520, y: 500, size: 18 }, { x: 555, y: 468, size: 14 },
-      // bottom-right
-      { x: 660, y: 480, size: 16 }, { x: 700, y: 500, size: 18 }, { x: 740, y: 460, size: 15 },
-      // right-side (x620+, y0-180)
-      { x: 680, y: 100, size: 14 }, { x: 720, y: 120, size: 16 },
-    ]
-    for (const { x, y, size } of treeSets) {
-      // Trunk
-      g.fillStyle(0x5a3510, 1)
-      g.fillRect(x - 3, y + size * 0.5, 6, size * 0.6)
-      // Shadow foliage
-      g.fillStyle(0x0d2a06, 0.7)
-      g.fillTriangle(x, y - size * 0.8, x - size * 0.9, y + size * 0.5, x + size * 0.9, y + size * 0.5)
-      // Main foliage (two layers)
-      g.fillStyle(0x1a4a0a, 1)
-      g.fillTriangle(x, y - size, x - size * 0.85, y + size * 0.3, x + size * 0.85, y + size * 0.3)
-      g.fillStyle(0x22640e, 1)
-      g.fillTriangle(x, y - size * 1.1, x - size * 0.65, y + size * 0.0, x + size * 0.65, y + size * 0.0)
-      // Highlight
-      g.fillStyle(0x2a7a14, 0.5)
-      g.fillTriangle(x, y - size * 1.05, x - size * 0.3, y - size * 0.1, x + size * 0.05, y - size * 0.1)
-    }
-  }
-
-  private drawPath() {
-    const g = this.add.graphics()
-    const PATH_W = 36
-
-    // --- Shadow layer (offset down-right for depth) ---
-    g.fillStyle(0x1a1005, 0.6)
-    for (let i = 0; i < WAYPOINTS.length - 1; i++) {
-      const a = WAYPOINTS[i]; const b = WAYPOINTS[i + 1]
-      const horiz = a.y === b.y
-      const mx = Math.min(a.x, b.x) - (horiz ? 0 : PATH_W / 2)
-      const my = Math.min(a.y, b.y) - (horiz ? PATH_W / 2 : 0)
-      const w = horiz ? Math.abs(b.x - a.x) : PATH_W
-      const h = horiz ? PATH_W : Math.abs(b.y - a.y)
-      g.fillRect(mx + 4, my + 4, w, h)
-    }
-
-    // --- Base path (dirt/stone) ---
-    for (let i = 0; i < WAYPOINTS.length - 1; i++) {
-      const a = WAYPOINTS[i]; const b = WAYPOINTS[i + 1]
-      const horiz = a.y === b.y
-      const mx = Math.min(a.x, b.x) - (horiz ? 0 : PATH_W / 2)
-      const my = Math.min(a.y, b.y) - (horiz ? PATH_W / 2 : 0)
-      const w = horiz ? Math.abs(b.x - a.x) : PATH_W
-      const h = horiz ? PATH_W : Math.abs(b.y - a.y)
-
-      // Base stone color
-      g.fillStyle(0x5c4a2a, 1)
-      g.fillRect(mx, my, w, h)
-
-      // Lighter center strip
-      g.fillStyle(0x6e5a36, 0.8)
-      const cx = horiz ? 0 : 5; const cy = horiz ? 5 : 0
-      const cw = w - (horiz ? 0 : 10); const ch = h - (horiz ? 10 : 0)
-      g.fillRect(mx + cx, my + cy, cw, ch)
-
-      // Cobblestone texture: staggered grid of dark lines
-      g.lineStyle(1, 0x3a2a10, 0.55)
-      const stoneW = 16; const stoneH = 12
-      for (let sx = mx; sx < mx + w; sx += stoneW) {
-        for (let sy = my; sy < my + h; sy += stoneH) {
-          const offset = Math.floor((sy - my) / stoneH) % 2 === 0 ? 0 : stoneW / 2
-          g.strokeRect(sx + offset, sy, stoneW, stoneH)
-        }
-      }
-
-      // Top/left highlight edge (simulates light from top-left)
-      g.lineStyle(2, 0x8a7050, 0.6)
-      if (horiz) {
-        g.lineBetween(mx, my, mx + w, my)
-      } else {
-        g.lineBetween(mx, my, mx, my + h)
-      }
-
-      // Bottom/right shadow edge
-      g.lineStyle(2, 0x2a1a05, 0.7)
-      if (horiz) {
-        g.lineBetween(mx, my + h, mx + w, my + h)
-      } else {
-        g.lineBetween(mx + w, my, mx + w, my + h)
-      }
-    }
-
-    // --- Arrow direction indicators along path ---
-    g.lineStyle(2, 0xc8a050, 0.4)
-    for (let i = 0; i < WAYPOINTS.length - 1; i++) {
-      const a = WAYPOINTS[i]; const b = WAYPOINTS[i + 1]
-      const cx = (a.x + b.x) / 2; const cy = (a.y + b.y) / 2
-      const dx = b.x - a.x; const dy = b.y - a.y
-      const len = Math.sqrt(dx * dx + dy * dy)
-      const nx = dx / len; const ny = dy / len
-      const perp = { x: -ny * 5, y: nx * 5 }
-      // small chevron
-      g.beginPath()
-      g.moveTo(cx - nx * 7 + perp.x, cy - ny * 7 + perp.y)
-      g.lineTo(cx + nx * 7, cy + ny * 7)
-      g.lineTo(cx - nx * 7 - perp.x, cy - ny * 7 - perp.y)
-      g.strokePath()
-    }
-
-    // --- Start portal ---
-    const start = WAYPOINTS[0]
-    g.fillStyle(0x003300, 0.8)
-    g.fillCircle(start.x, start.y, 16)
-    g.lineStyle(3, 0x00ff44, 0.9)
-    g.strokeCircle(start.x, start.y, 16)
-    g.lineStyle(1, 0x88ffaa, 0.5)
-    g.strokeCircle(start.x, start.y, 11)
-    this.add.text(start.x, start.y, '▶', { fontSize: '12px', color: '#00ff88' }).setOrigin(0.5)
-
-    // --- End (castle) ---
-    const last = WAYPOINTS[WAYPOINTS.length - 1]
-    g.fillStyle(0x220000, 0.8)
-    g.fillCircle(last.x, last.y, 16)
-    g.lineStyle(3, 0xff4444, 0.9)
-    g.strokeCircle(last.x, last.y, 16)
-    this.add.text(last.x, last.y - 32, '🏰', { fontSize: '24px' }).setOrigin(0.5)
   }
 
   private drawMapMarkers(waypoints: Point[], entryDir: 'right' | 'down' = 'right') {
@@ -811,113 +630,15 @@ export class GameScene extends Phaser.Scene {
     btn.on('pointerover', () => btn.setAlpha(0.75))
     btn.on('pointerout',  () => btn.setAlpha(1))
     btn.on('pointerdown', () => {
-      if (this.codexContainer) {
-        this.codexContainer.destroy()
-        this.codexContainer = null
-      } else {
-        this.openCodex('enemies')
-      }
+      if (this.codexContainer) { this.codexContainer.destroy(); return }
+      this.openCodex('enemies')
     })
   }
 
-  private openCodex(tab: 'enemies' | 'towers') {
-    if (this.codexContainer) { this.codexContainer.destroy() }
-
-    const px = 490; const py = 52; const pw = 302; const ph = 410
-    const c = this.add.container(0, 0).setDepth(80)
+  private openCodex(tab: CodexTab) {
+    const c = this.openCodexPanel(tab, (t) => this.openCodex(t))
+    c.on('destroy', () => { this.codexContainer = null })
     this.codexContainer = c
-
-    // panel background
-    const bg = this.add.graphics()
-    bg.fillStyle(0x080f20, 0.97)
-    bg.fillRoundedRect(px, py, pw, ph, 10)
-    bg.lineStyle(2, 0x4a6aaa, 0.9)
-    bg.strokeRoundedRect(px, py, pw, ph, 10)
-    c.add(bg)
-
-    c.add(this.add.text(px + pw / 2, py + 15, '📖  Codex', {
-      fontSize: '15px', color: '#ddc880', fontStyle: 'bold'
-    }).setOrigin(0.5))
-
-    // tabs
-    const tabDefs: Array<{ key: 'enemies' | 'towers'; label: string }> = [
-      { key: 'enemies', label: '⚔ Inimigos' },
-      { key: 'towers',  label: '🏹 Torres'  },
-    ]
-    tabDefs.forEach(({ key, label }, i) => {
-      const active = key === tab
-      const tx = px + 14 + i * 143
-      const tbg = this.add.graphics()
-      tbg.fillStyle(active ? 0x2a3f6a : 0x111828, 1)
-      tbg.fillRoundedRect(tx, py + 32, 134, 24, 5)
-      if (active) { tbg.lineStyle(1, 0x4a6aaa); tbg.strokeRoundedRect(tx, py + 32, 134, 24, 5) }
-      c.add(tbg)
-      const ttxt = this.add.text(tx + 67, py + 44, label, {
-        fontSize: '12px', color: active ? '#ffffff' : '#667799'
-      }).setOrigin(0.5).setInteractive({ cursor: 'pointer' })
-      ttxt.on('pointerdown', () => this.openCodex(key))
-      c.add(ttxt)
-    })
-
-    const cy = py + 66
-
-    if (tab === 'enemies') {
-      const entries = [
-        { name: 'Goblin',  color: 0x22cc44, hex: '#22dd66', lines: ['HP: 60  |  Vel: rápida', 'Sem resistências', 'Recompensa: 8💰'] },
-        { name: 'Troll',   color: 0x9966cc, hex: '#bb88ff', lines: ['HP: 160  |  Vel: lenta', 'Resist. física: 25%', 'Recompensa: 30💰'] },
-        { name: 'Xamã',    color: 0xcc8822, hex: '#ffbb44', lines: ['HP: 120  |  Vel: média', 'Resist. mágica: 65%', 'Amaldiçoa torres próximas', 'Recompensa: 20💰'] },
-        { name: 'Super Orc', color: 0xff3333, hex: '#ff4444', lines: ['HP: 1200 |  Vel: muito lenta', 'Resistências: 30% Fís. / 30% Mág.', 'O terrível chefe final — Fase 4!', 'Recompensa: 150💰'] },
-      ]
-      entries.forEach(({ name, color, hex, lines }, i) => {
-        const ey = cy + i * 112
-        const dot = this.add.graphics()
-        dot.fillStyle(color, 1)
-        dot.fillCircle(px + 22, ey + 18, 11)
-        dot.lineStyle(2, 0xffffff, 0.2)
-        dot.strokeCircle(px + 22, ey + 18, 11)
-        c.add(dot)
-        c.add(this.add.text(px + 42, ey + 9, name, { fontSize: '14px', color: hex, fontStyle: 'bold' }))
-        lines.forEach((line, j) => {
-          c.add(this.add.text(px + 18, ey + 28 + j * 18, `• ${line}`, { fontSize: '11px', color: '#99aacc' }))
-        })
-        if (i < entries.length - 1) {
-          const sep = this.add.graphics()
-          sep.lineStyle(1, 0x2a3550, 0.8)
-          sep.lineBetween(px + 10, ey + 105, px + pw - 10, ey + 105)
-          c.add(sep)
-        }
-      })
-    } else {
-      const entries = [
-        { name: 'Arqueiro', color: '#D2691E', sq: 0xD2691E, lines: ['Dano: físico  |  Alcance: 130', 'Nv2: arco potenciado', 'Nv3: tiro triplo ✨', 'Custo: 80💰'] },
-        { name: 'Mago',     color: '#DA70D6', sq: 0xDA70D6, lines: ['Dano: mágico  |  Alcance: 120', 'Nv2: projéteis mais fortes', 'Nv3: lentidão nas vítimas ✨', 'Custo: 110💰'] },
-        { name: 'Morteiro', color: '#9aaa88', sq: 0x808080, lines: ['Dano: físico AoE  |  Alcance: 150', 'Nv2: barril reforçado', 'Nv3: explosão em área ✨', 'Custo: 130💰'] },
-      ]
-      entries.forEach(({ name, color, sq, lines }, i) => {
-        const ty = cy + i * 112
-        const sq2 = this.add.graphics()
-        sq2.fillStyle(sq, 1); sq2.fillRect(px + 12, ty + 8, 18, 18)
-        sq2.lineStyle(1, 0xffffff, 0.2); sq2.strokeRect(px + 12, ty + 8, 18, 18)
-        c.add(sq2)
-        c.add(this.add.text(px + 40, ty + 9, name, { fontSize: '14px', color, fontStyle: 'bold' }))
-        lines.forEach((line, j) => {
-          c.add(this.add.text(px + 18, ty + 28 + j * 18, `• ${line}`, { fontSize: '11px', color: '#99aacc' }))
-        })
-        if (i < entries.length - 1) {
-          const sep = this.add.graphics()
-          sep.lineStyle(1, 0x2a3550, 0.8)
-          sep.lineBetween(px + 10, ty + 105, px + pw - 10, ty + 105)
-          c.add(sep)
-        }
-      })
-    }
-
-    // close button
-    const closeBtn = this.add.text(px + pw - 8, py + 6, '✕', {
-      fontSize: '13px', color: '#ff6666'
-    }).setOrigin(1, 0).setInteractive({ cursor: 'pointer' })
-    closeBtn.on('pointerdown', () => { this.codexContainer?.destroy(); this.codexContainer = null })
-    c.add(closeBtn)
   }
 
   private closePopup() {

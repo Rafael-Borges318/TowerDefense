@@ -2,7 +2,7 @@ import { ProgressManager } from '../managers/ProgressManager'
 import { SupabaseService } from '../services/SupabaseService'
 import { BaseScene } from './BaseScene'
 import { GAME_W as W, GAME_H as H } from '../constants/game'
-import { CODEX_ENEMIES, CODEX_TOWERS, CODEX_LAYOUT, type CodexTab } from '../data/codexData'
+import { type CodexTab } from '../data/codexData'
 
 const PHASES = [
   { num: 1, label: 'Fase 1', color: '#aaffaa', bg: 0x0d2a0d },
@@ -16,6 +16,8 @@ export class MenuScene extends BaseScene {
 
   preload() {
     this.load.image('telaInicial', '/assets/telaInicialPixel.jpeg')
+    this.load.spritesheet('orc_walk', 'assets/orc_walk.png', { frameWidth: 100, frameHeight: 100 })
+    this.load.image('boss_walk_0', 'assets/bossfinal/1_TROLL/Troll_01_1_WALK_000.png')
   }
 
   create() {
@@ -103,7 +105,12 @@ export class MenuScene extends BaseScene {
 
   private createCodexButton() {
     let codexCont: Phaser.GameObjects.Container | null = null
-    const setCont = (c: Phaser.GameObjects.Container | null) => { codexCont = c }
+
+    const openCodex = (tab: CodexTab) => {
+      const c = this.openCodexPanel(tab, openCodex)
+      c.on('destroy', () => { codexCont = null })
+      codexCont = c
+    }
 
     const btn = this.add.text(W - 10, H - 10, '📖 Codex', {
       fontSize: '16px', color: '#ddc880',
@@ -112,80 +119,9 @@ export class MenuScene extends BaseScene {
     btn.on('pointerover', () => btn.setAlpha(0.8))
     btn.on('pointerout',  () => btn.setAlpha(1))
     btn.on('pointerdown', () => {
-      if (codexCont) { codexCont.destroy(); codexCont = null; return }
-      codexCont = this.openCodex('enemies', setCont)
+      if (codexCont) { codexCont.destroy(); return }
+      openCodex('enemies')
     })
-  }
-
-  private openCodex(tab: CodexTab, setCont: (c: Phaser.GameObjects.Container | null) => void): Phaser.GameObjects.Container {
-    const px = 150; const py = 70; const pw = 500; const ph = 420
-    const colW = pw / 2 - 20
-    const contentY = py + 80
-    const c = this.add.container(0, 0)
-
-    const bgPanel = this.add.graphics()
-    bgPanel.fillStyle(0x080f20, 0.97)
-    bgPanel.fillRoundedRect(px, py, pw, ph, 12)
-    bgPanel.lineStyle(2, 0x4a6aaa)
-    bgPanel.strokeRoundedRect(px, py, pw, ph, 12)
-    c.add(bgPanel)
-
-    c.add(this.add.text(px + pw / 2, py + 18, '📖  Codex — Guia do Jogo', {
-      fontSize: '17px', color: '#ddc880', fontStyle: 'bold',
-    }).setOrigin(0.5))
-
-    const tabs: Array<{ key: CodexTab; label: string }> = [
-      { key: 'enemies', label: '⚔  Inimigos' },
-      { key: 'towers',  label: '🏹  Torres'  },
-    ]
-    tabs.forEach(({ key, label }, i) => {
-      const active = key === tab
-      const tx = px + 20 + i * 240
-      const tabBg = this.add.graphics()
-      tabBg.fillStyle(active ? 0x2a3f6a : 0x111828)
-      tabBg.fillRoundedRect(tx, py + 42, 220, 26, 5)
-      if (active) { tabBg.lineStyle(1, 0x4a6aaa); tabBg.strokeRoundedRect(tx, py + 42, 220, 26, 5) }
-      c.add(tabBg)
-      const tabTxt = this.add.text(tx + 110, py + 55, label, {
-        fontSize: '13px', color: active ? '#ffffff' : '#667799',
-      }).setOrigin(0.5).setInteractive({ cursor: 'pointer' })
-      tabTxt.on('pointerdown', () => { c.destroy(); setCont(this.openCodex(key, setCont)) })
-      c.add(tabTxt)
-    })
-
-    if (tab === 'enemies') {
-      CODEX_ENEMIES.forEach(({ name, dotColor, textColor, lines }, i) => {
-        const { col, row } = CODEX_LAYOUT[i]
-        const ex = px + 14 + col * (colW + 20)
-        const ey = contentY + row * 175
-        const dot = this.add.graphics()
-        dot.fillStyle(dotColor, 1); dot.fillCircle(ex + 16, ey + 20, 13)
-        dot.lineStyle(2, 0xffffff, 0.2); dot.strokeCircle(ex + 16, ey + 20, 13)
-        c.add(dot)
-        c.add(this.add.text(ex + 38, ey + 10, name, { fontSize: '15px', color: textColor, fontStyle: 'bold' }))
-        lines.forEach((line, j) => c.add(this.add.text(ex + 14, ey + 34 + j * 19, `• ${line}`, { fontSize: '11px', color: '#99aacc' })))
-      })
-    } else {
-      CODEX_TOWERS.forEach(({ name, sqColor, textColor, lines }, i) => {
-        const { col, row } = CODEX_LAYOUT[i]
-        const tx2 = px + 14 + col * (colW + 20)
-        const ty2 = contentY + row * 175
-        const sq = this.add.graphics()
-        sq.fillStyle(sqColor, 1); sq.fillRect(tx2 + 6, ty2 + 10, 20, 20)
-        sq.lineStyle(1, 0xffffff, 0.2); sq.strokeRect(tx2 + 6, ty2 + 10, 20, 20)
-        c.add(sq)
-        c.add(this.add.text(tx2 + 36, ty2 + 10, name, { fontSize: '15px', color: textColor, fontStyle: 'bold' }))
-        lines.forEach((line, j) => c.add(this.add.text(tx2 + 14, ty2 + 34 + j * 19, `• ${line}`, { fontSize: '11px', color: '#99aacc' })))
-      })
-    }
-
-    const closeBtn = this.add.text(px + pw - 10, py + 8, '✕', {
-      fontSize: '14px', color: '#ff6666',
-    }).setOrigin(1, 0).setInteractive({ cursor: 'pointer' })
-    closeBtn.on('pointerdown', () => { c.destroy(); setCont(null) })
-    c.add(closeBtn)
-
-    return c
   }
 
   private async showLeaderboard() {
