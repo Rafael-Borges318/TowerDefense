@@ -13,6 +13,7 @@ export interface TowerEntry {
   name: string
   sqColor: number
   textColor: string
+  imageKey?: string
   lines: string[]
 }
 
@@ -45,15 +46,15 @@ export const CODEX_ENEMIES: EnemyEntry[] = [
 
 export const CODEX_TOWERS: TowerEntry[] = [
   {
-    name: 'Arqueiro', sqColor: 0xD2691E, textColor: '#D2691E',
+    name: 'Arqueiro', sqColor: 0xD2691E, textColor: '#D2691E', imageKey: 'torre_arqueiro',
     lines: ['Dano: físico  |  Alcance: 130px', 'Dispara flechas numa unidade', 'Nv3: tiro triplo (3 alvos) ✨', 'Custo base: 80💰'],
   },
   {
-    name: 'Mago', sqColor: 0xAA55EE, textColor: '#cc88ff',
+    name: 'Mago', sqColor: 0xAA55EE, textColor: '#cc88ff', imageKey: 'torre_mago',
     lines: ['Dano: mágico  |  Alcance: 120px', 'Ignora resist. física', 'Nv3: lentidão nas vítimas ✨', 'Custo base: 110💰'],
   },
   {
-    name: 'Morteiro', sqColor: 0x888888, textColor: '#aaaaaa',
+    name: 'Morteiro', sqColor: 0x888888, textColor: '#aaaaaa', imageKey: 'torre_morteiro',
     lines: ['Dano: físico AoE  |  Alcance: 150px', 'Atinge múltiplos inimigos', 'Nv3: explosão em grande área ✨', 'Custo base: 130💰'],
   },
 ]

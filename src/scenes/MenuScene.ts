@@ -16,6 +16,12 @@ export class MenuScene extends BaseScene {
 
   preload() {
     this.load.image('telaInicial', '/assets/telaInicialPixel.jpeg')
+    // assets needed for the Codex panel
+    this.load.spritesheet('orc_walk', 'assets/orc_walk.png', { frameWidth: 100, frameHeight: 100 })
+    this.load.image('boss_walk_0', 'assets/bossfinal/1_TROLL/Troll_01_1_WALK_000.png')
+    this.load.image('torre_arqueiro',  'assets/torreArqueiro.png')
+    this.load.image('torre_mago',      'assets/torreMago.png')
+    this.load.image('torre_morteiro',  'assets/torreMorteiro.png')
   }
 
   create() {

@@ -98,17 +98,22 @@ export abstract class BaseScene extends Phaser.Scene {
         }
       })
     } else {
-      CODEX_TOWERS.forEach(({ name, sqColor, textColor, lines }, i) => {
+      CODEX_TOWERS.forEach(({ name, sqColor, textColor, imageKey, lines }, i) => {
         const ly = i * ENTRY_H
 
-        const sq = this.add.graphics()
-        sq.fillStyle(sqColor, 1); sq.fillRect(14, ly + 18, 34, 34)
-        sq.lineStyle(1, 0xffffff, 0.2); sq.strokeRect(14, ly + 18, 34, 34)
-        cg.add(sq)
+        if (imageKey && this.textures.exists(imageKey)) {
+          const img = this.add.image(46, ly + 44, imageKey).setDisplaySize(72, 72)
+          cg.add(img)
+        } else {
+          const sq = this.add.graphics()
+          sq.fillStyle(sqColor, 1); sq.fillRect(14, ly + 18, 34, 34)
+          sq.lineStyle(1, 0xffffff, 0.2); sq.strokeRect(14, ly + 18, 34, 34)
+          cg.add(sq)
+        }
 
-        cg.add(this.add.text(62, ly + 7, name, { fontSize: '15px', color: textColor, fontStyle: 'bold' }))
+        cg.add(this.add.text(106, ly + 7, name, { fontSize: '15px', color: textColor, fontStyle: 'bold' }))
         lines.forEach((line, j) => {
-          cg.add(this.add.text(62, ly + 28 + j * 18, `• ${line}`, { fontSize: '11px', color: '#99aacc' }))
+          cg.add(this.add.text(106, ly + 28 + j * 18, `• ${line}`, { fontSize: '11px', color: '#99aacc' }))
         })
 
         if (i < CODEX_TOWERS.length - 1) {
