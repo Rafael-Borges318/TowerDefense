@@ -1,6 +1,8 @@
 # Tower Defense
 
-Tower Defense 2D construido com **Phaser 3**, **TypeScript** e **Vite**.
+Tower Defense 2D construído com **Phaser 3**, **TypeScript** e **Vite**.
+
+---
 
 ## Como rodar
 
@@ -11,106 +13,319 @@ npm run dev
 
 Acesse `http://localhost:3000` no navegador.
 
-## Como jogar
+---
 
-1. Clique em **JOGAR** no menu
-2. Clique em um slot de torre (quadrado tracejado) para construir uma torre
-3. Clique em **[ Iniciar Horda ]** para comecar a horda de inimigos
-4. Clique em uma torre existente para:
-   - Alterar estrategia de mira (Mais proximo / Mais forte / Primeiro)
-   - Alterar modo de disparo (Pesado / Normal / Rapido)
-   - Fazer upgrade (ate nivel 3, cada nivel desbloqueia poder especial)
-   - Vender a torre por parte do valor investido
-5. Sobreviva a todas as fases sem perder todas as vidas
-6. Use o botao (canto inferior direito) para abrir o Codex de inimigos e torres
+## Por que Phaser 3?
+
+| Critério | Motivo da escolha |
+|---|---|
+| **Loop de jogo nativo** | `preUpdate` / `update` por GameObject elimina lógica de tick manual |
+| **Scene Manager** | Transições entre Menu → Jogo → Pause → Game Over sem frameworks externos |
+| **Asset pipeline** | `this.load.image/spritesheet` com fila automática e callback `create` |
+| **Sistema de animações** | `AnimationManager` + `Sprite.play()` cobrem todos os estados dos inimigos |
+| **Entrada unificada** | `this.input` cobre mouse, touch e teclado com o mesmo código |
+| **Renderização Canvas/WebGL** | Escolha automática por `Phaser.AUTO`; funciona em qualquer navegador moderno |
+| **TypeScript nativo** | `@types` oficiais; toda a API fortemente tipada |
+| **Sem dependências extras** | Sistema de física, câmera, display e eventos são built-in |
+
+> Alternativas descartadas: **PixiJS** (sem Scene Manager / loop integrado), **Babylon.js** (3D, overhead desnecessário), **Vanilla Canvas** (boilerplate excessivo para um TD com animações e cenas múltiplas).
 
 ---
 
-## Estrutura das Fases
+## Arquitetura Geral
 
-O jogo possui **4 fases** progressivas, cada uma com mapa visual proprio e 5 hordas de inimigos:
+```
+src/
+├── config/       enemies.json, towers.json        ← dados externos (data-driven)
+├── constants/    game.ts                           ← constantes numéricas centralizadas
+├── data/         codexData.ts                      ← conteúdo do Codex in-game
+├── entities/     Tower.ts, Enemy.ts, Projectile.ts ← GameObjects com preUpdate
+├── events/       EventBus.ts                       ← barramento global de eventos
+├── factories/    TowerFactory.ts, EnemyFactory.ts  ← criação desacoplada
+├── managers/     GameManager, EconomyManager,      ← estado global via Singleton
+│                 WaveManager, ProgressManager
+├── patterns/     TargetingStrategy.ts              ← Strategy pattern
+├── scenes/       BaseScene, Menu, Game, Pause,     ← cenas Phaser
+│                 GameOver, Upgrade
+├── services/     SupabaseService.ts                ← leaderboard remoto
+└── main.ts       ← configuração do Phaser.Game
+```
 
-| Fase | Mapa | Hordas | Boss |
-|------|------|--------|------|
-| 1 | fase1pixel.png | 5 | Nao |
-| 2 | Mapa procedural | 5 | Nao |
-| 3 | fase3pixel.png | 5 | Nao |
-| 4 | fase4pixel.png | 5 + 1 Boss | Sim (Super Orc) |
+### Decisões arquiteturais
 
-### Boss Final - Super Orc
+| Decisão | Justificativa |
+|---|---|
+| **Data-driven config** (JSON) | Balancear torres/inimigos sem tocar no código |
+| **EventBus global** | Desacopla entidades; Tower não conhece GameManager |
+| **Singletons com `reset()`** | Estado limpo a cada partida sem recarregar a página |
+| **BaseScene abstrata** | Codex e botões reutilizados em cenas diferentes sem duplicação |
+| **Estratégia trocável em runtime** | Jogador muda alvo da torre sem destruir/recriar o objeto |
 
-- Aparece **sozinho** como a **6a e ultima horda da Fase 4**
-- HP: 1200 | Velocidade: muito lenta
-- Resistencia fisica: 30% | Resistencia magica: 30%
-- Recompensa: 150 ouro
-- Usa sprites animados exclusivos (Troll_01_1_WALK/HURT/DIE/IDLE)
+---
+
+## Padrões de Projeto
+
+### Observer — EventBus
+
+Comunicação entre módulos via eventos nomeados. Nenhuma entidade importa outra diretamente para reportar estado.
+
+```
+Events.ENEMY_DIED        → EconomyManager adiciona ouro, GameManager adiciona score
+Events.ENEMY_REACHED_END → GameManager desconta vida
+Events.GOLD_CHANGED      → HUD atualiza exibição
+Events.HORDE_COMPLETE    → bônus de ouro, score, botão da próxima horda
+Events.PHASE_COMPLETE    → cálculo de estrelas, overlay de conclusão
+Events.GAME_OVER         → transição para GameOverScene
+Events.SHAMAN_CURSE      → todas as torres no raio ficam perturbadas
+```
+
+### Strategy — TargetingStrategy
+
+`Tower` recebe uma `ITargetingStrategy` e pode trocá-la em tempo real sem reconstrução.
+
+| Classe | Comportamento |
+|---|---|
+| `NearestTargeting` | Inimigo com menor distância euclidiana da torre |
+| `StrongestTargeting` | Inimigo com maior HP atual |
+| `FirstTargeting` | Inimigo com maior `waypointIndex` (mais avançado no caminho) |
+
+### Factory — TowerFactory / EnemyFactory
+
+Centralizam a criação de objetos, lendo configurações dos JSONs e instanciando com estratégia padrão (`NearestTargeting`).
+
+### Singleton — GameManager / EconomyManager / ProgressManager / EventBus
+
+Acesso via `getInstance()`; `reset()` zera o estado entre partidas sem vazar referências.
+
+| Singleton | Responsabilidade |
+|---|---|
+| `GameManager` | Vidas, estado (playing/gameover), score, cálculo de estrelas |
+| `EconomyManager` | Ouro atual, `spend()`, `add()`, `canAfford()` |
+| `ProgressManager` | Fase atual, estrelas acumuladas, upgrades permanentes (localStorage) |
+| `EventBus` | Barramento de eventos (extends `Phaser.Events.EventEmitter`) |
+
+### Template Method — BaseScene
+
+`BaseScene` (abstrata) fornece `makeBtn()` e `openCodexPanel()`. As cenas concretas herdam e customizam sem reimplementar o layout do Codex.
+
+---
+
+## Cenas
+
+| Cena | Conteúdo |
+|---|---|
+| **MenuScene** | Tela inicial, botão Jogar, seletor de fase, atalho para Upgrades, Leaderboard, Codex |
+| **GameScene** | Loop principal: mapa, slots, HUD (ouro/vidas/horda/fase), popups de construção e upgrade |
+| **PauseScene** | Overlay de pausa; o `GameScene` fica congelado via `scene.pause()` |
+| **GameOverScene** | Score final, input de nome, salvamento no Supabase, botão Retry e Menu |
+| **UpgradeScene** | Loja de melhorias permanentes com ouro de estrelas |
+
+---
+
+## Fases e Mapas
+
+| Fase | Mapa | Slots de torre | Hordas normais | Boss |
+|---|---|---|---|---|
+| 1 | `fase1pixel.png` | 4 | 5 | Não |
+| 2 | `fase2pixel.png` | 4 | 5 | Não |
+| 3 | `fase3pixel.png` | 4 | 5 | Não |
+| 4 | `fase4pixel.png` | 4 | 5 + 1 horda boss | Sim |
+
+- Cada fase tem **4 slots** fixos posicionados manualmente fora do caminho do inimigo.
+- O ouro inicial escala por fase: `100 + fase × 50`
+
+| Fase | Ouro inicial |
+|---|---|
+| 1 | 150 |
+| 2 | 200 |
+| 3 | 250 |
+| 4 | 300 |
 
 ---
 
 ## Inimigos
 
-| Tipo | HP | Velocidade | Resist. Fisica | Resist. Magica | Recompensa |
-|------|----|------------|----------------|----------------|------------|
-| Goblin | 80 | 130 | 0% | 0% | 8 ouro |
-| Troll | 210 | 55 | 25% | 0% | 30 ouro |
-| Xama | 160 | 80 | 0% | 65% | 20 ouro |
-| Super Orc (Boss) | 1200 | 30 | 30% | 30% | 150 ouro |
+### Stats base (sem escalonamento de horda)
 
-> **Escalamento de HP**: cada horda dentro de uma fase aplica +5% cumulativo de HP nos inimigos.
+| Inimigo | HP | Velocidade (px/s) | Resist. Física | Resist. Mágica | Recompensa |
+|---|---|---|---|---|---|
+| **Goblin** | 80 | 130 | 0% | 0% | 8 💰 |
+| **Troll** | 210 | 55 | 25% | 0% | 30 💰 |
+| **Xamã** | 160 | 80 | 0% | 65% | 20 💰 |
+| **Super Orc (Boss)** | 1800 | 30 | 30% | 30% | 150 💰 |
 
-### Regras de aparicao por horda:
-- **Goblins**: presentes em todas as hordas
-- **Trolls**: aparecem a partir da horda 2, ou em qualquer horda nas fases 2+
-- **Xamas**: aparecem a partir da horda 4, ou em qualquer horda nas fases 3+
-- **Boss**: exclusivo da ultima horda da Fase 4, aparece sozinho
+### Habilidade especial — Xamã
 
-### Habilidade especial - Xama
-O Xama lanca uma **maldicao** a cada 3,5 segundos: todas as torres no raio de 130px ficam **perturbadas por 2 segundos** (incapazes de atirar).
+Emite uma **maldição em área** a cada **3,5 s**: todas as torres dentro de **130 px** ficam **perturbadas por 2 s** (incapazes de atirar). A maldição é representada por um pulso visual laranja.
+
+### Escalonamento de HP por horda
+
+Cada horda dentro de uma fase aplica um multiplicador cumulativo de **+8%**:
+
+| Horda | Multiplicador de HP |
+|---|---|
+| 1 | 1.00× (base) |
+| 2 | 1.08× |
+| 3 | 1.17× |
+| 4 | 1.26× |
+| 5 | 1.36× |
+
+### Composição das hordas
+
+Regras de aparição:
+- **Goblin** — todas as hordas, todas as fases
+- **Troll** — horda ≥ 2 **ou** fase ≥ 2
+- **Xamã** — horda ≥ 4 **ou** fase ≥ 3
+- **Boss** — exclusivo da horda extra da Fase 4 (aparece sozinho)
+
+**Fórmulas de contagem (horda `h`, fase `p`):**
+
+```
+Goblins  = 6 + (p-1)×3 + h×2
+Trolls   = max(1, ⌊(p-1)×1.5 + h×0.8⌋)
+Xamãs    = max(1, ⌊(p-1)×0.8 + (h-3)×0.7⌋)
+```
+
+**Exemplo — Fase 1:**
+
+| Horda | Goblins | Trolls | Xamãs | Intervalo entre spawns |
+|---|---|---|---|---|
+| 1 | 8 | — | — | 1100 ms |
+| 2 | 10 | 1 | — | 1060 ms |
+| 3 | 12 | 2 | — | 1020 ms |
+| 4 | 14 | 3 | 1 | 980 ms |
+| 5 | 16 | 4 | 1 | 940 ms |
+
+**Exemplo — Fase 4:**
+
+| Horda | Goblins | Trolls | Xamãs | Intervalo entre spawns |
+|---|---|---|---|---|
+| 1 | 17 | 5 | 1 | 920 ms |
+| 2 | 19 | 6 | 1 | 880 ms |
+| 3 | 21 | 6 | 2 | 840 ms |
+| 4 | 23 | 7 | 3 | 800 ms |
+| 5 | 25 | 8 | 3 | 760 ms |
+| 6 | — | — | — Boss (1) — | 1000 ms |
+
+> Fórmula do intervalo: `max(450, 1200 − fase×60 − horda×40)` ms
 
 ---
 
 ## Torres
 
-| Torre | Tipo de Dano | Alcance | Custo | Nivel 3 |
-|-------|-------------|---------|-------|---------|
-| Arqueiro | Fisico | 130 | 80 ouro | Tiro Triplo |
-| Mago | Magico | 120 | 110 ouro | Lentidao nas vitimas |
-| Morteiro | Fisico AoE | 150 | 130 ouro | Explosao em area |
+### Estatísticas por nível
+
+#### Arqueiro (dano físico)
+
+| Nível | Custo | Custo upgrade | Dano | Alcance | Cadência | Especial |
+|---|---|---|---|---|---|---|
+| I | 50 💰 | 60 💰 | 15 | 130 px | 1,0 s | — |
+| II | — | 100 💰 | 28 | 155 px | 0,8 s | — |
+| III | — | — | 35 | 170 px | 0,7 s | ✨ Tiro triplo (até 3 alvos) |
+
+#### Mago (dano mágico)
+
+| Nível | Custo | Custo upgrade | Dano | Alcance | Cadência | Especial |
+|---|---|---|---|---|---|---|
+| I | 75 💰 | 80 💰 | 20 | 110 px | 1,4 s | — |
+| II | — | 120 💰 | 38 | 135 px | 1,1 s | — |
+| III | — | — | 55 | 155 px | 0,9 s | ✨ Lentidão 2 s nas vítimas |
+
+#### Morteiro (dano físico, AoE)
+
+| Nível | Custo | Custo upgrade | Dano | Alcance | Cadência | Especial |
+|---|---|---|---|---|---|---|
+| I | 100 💰 | 100 💰 | 30 | 160 px | 2,2 s | AoE |
+| II | — | 150 💰 | 55 | 180 px | 1,8 s | AoE |
+| III | — | — | 80 | 200 px | 1,4 s | ✨ AoE grande (raio 65 px) |
+
+> **Dano efetivo** = `dano_base × (1 − resistência%) × multiplicador_modo × multiplicador_upgrade`
 
 ### Modos de Disparo
-- **Pesado (Heavy)**: dano alto, cadencia baixa
-- **Normal**: equilibrio entre dano e velocidade
-- **Rapido (Rapid)**: dano reduzido, altissima cadencia
 
-### Estrategias de Mira
-- **Mais proximo** - ataca o inimigo mais proximo da torre
-- **Mais forte** - ataca o inimigo com maior HP atual
-- **Primeiro** - ataca o inimigo mais avancado no caminho
+Configurável por torre individualmente a qualquer momento (sem custo).
 
----
+| Modo | Mult. de Dano | Mult. de Cadência | Resultado prático |
+|---|---|---|---|
+| ⚡ Potente | ×1.8 (+80%) | ×1.75 (mais lento) | Mais dano por tiro, menos tiros por segundo |
+| ⚖ Normal | ×1.0 | ×1.0 | Padrão |
+| 💨 Rápido | ×0.55 (−45%) | ×0.45 (mais rápido) | Muito mais tiros, dano reduzido |
 
-## Arquitetura e Padroes de Projeto
+### Estratégias de Mira
 
-### Observer (EventBus)
-`EventBus` e um Singleton que estende `Phaser.Events.EventEmitter`. Toda comunicacao entre entidades ocorre por eventos (`ENEMY_DIED`, `ENEMY_REACHED_END`, `GOLD_CHANGED`, `GAME_OVER`, `HORDE_COMPLETE`, `PHASE_COMPLETE`, `SHAMAN_CURSE`).
+Trocável em runtime via popup da torre (sem custo).
 
-### Strategy (TargetingStrategy)
-A `Tower` recebe uma implementacao de `ITargetingStrategy` e pode troca-la em tempo real:
-- **NearestTargeting** - ataca o inimigo mais proximo
-- **StrongestTargeting** - ataca o inimigo com mais HP
-- **FirstTargeting** - ataca o inimigo mais avancado no caminho
+| Estratégia | Lógica |
+|---|---|
+| Mais próximo (padrão) | Menor distância euclidiana até a torre |
+| Mais forte | Maior HP atual |
+| Primeiro | Maior `waypointIndex` (mais avançado no caminho) |
 
-### Factory (EnemyFactory / TowerFactory)
-Centralizam a criacao de objetos, lendo stats dos JSONs de config.
+### Venda de torres
 
-### Singleton (GameManager, EconomyManager, ProgressManager)
-Acesso via `getInstance()` garante estado global consistente.
+- Valor de venda = **50% do ouro total investido** (custo base + upgrades comprados)
 
 ---
 
-## Configuracao Supabase (opcional)
+## Sistema de Vidas e Game Over
 
-Para ativar o leaderboard, crie uma tabela no Supabase:
+| Situação | Efeito |
+|---|---|
+| Inimigo chega ao fim do caminho | −1 vida |
+| Vidas chegam a 0 | Game Over → GameOverScene |
+| Fase concluída com vidas restantes | Cálculo de estrelas |
+
+**Vidas iniciais:** 5 + bônus do upgrade "Muralha Reforçada" (até +3 = máximo 8 vidas)
+
+---
+
+## Estrelas e Progressão
+
+### Cálculo de estrelas ao completar uma fase
+
+| Vidas restantes | Estrelas ganhas |
+|---|---|
+| 100% das vidas | ⭐⭐⭐ |
+| ≥ 60% das vidas | ⭐⭐ |
+| Qualquer outra | ⭐ |
+
+As estrelas ficam salvas em **localStorage** e são usadas como moeda na loja de upgrades permanentes.
+
+---
+
+## Upgrades Permanentes (UpgradeScene)
+
+Desbloqueáveis entre fases ou pelo menu. Custo: **1 estrela por nível**. Máximo: **nível 3** por upgrade.
+
+| Upgrade | Ícone | Efeito por nível | Máximo acumulado |
+|---|---|---|---|
+| Flechas Reforçadas | 🏹 | +15% dano do Arqueiro | +45% |
+| Foco Arcano | 🔮 | +15% dano do Mago | +45% |
+| Carcaça de Ferro | 💣 | +20% raio de explosão do Morteiro | +60% |
+| Muralha Reforçada | ❤️ | +1 vida por partida | +3 vidas |
+
+> **Total de estrelas necessárias para maxar tudo:** 12 estrelas (4 upgrades × 3 níveis × 1 estrela)
+
+---
+
+## Pontuação (Score)
+
+O score acumula durante a partida:
+
+| Evento | Pontos |
+|---|---|
+| Inimigo morto | Igual à recompensa em ouro (ex: Goblin = 8 pts) |
+| Horda concluída | Igual ao bônus de ouro da horda (25 + fase×8) |
+
+O score final é exibido na GameOverScene e pode ser enviado ao **Leaderboard** (Supabase) com um nome de jogador.
+
+---
+
+## Leaderboard — Supabase
+
+O Supabase é opcional. Sem ele, o jogo funciona normalmente e o botão de salvar score é silenciosamente ignorado.
+
+### Setup
 
 ```sql
 create table leaderboard (
@@ -121,10 +336,10 @@ create table leaderboard (
 );
 alter table leaderboard enable row level security;
 create policy "Allow inserts" on leaderboard for insert with check (true);
-create policy "Allow reads" on leaderboard for select using (true);
+create policy "Allow reads"   on leaderboard for select  using  (true);
 ```
 
-E preencha o `.env`:
+Crie um arquivo `.env` na raiz do projeto `jogo/`:
 
 ```
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
@@ -133,91 +348,51 @@ VITE_SUPABASE_ANON_KEY=sua-anon-key
 
 ---
 
-## Estrutura de pastas
+## Codex In-Game
+
+Disponível em qualquer cena (botão 📖 no canto inferior direito). Mostra duas abas:
+
+| Aba | Conteúdo |
+|---|---|
+| ⚔ Inimigos | Imagem, nome, HP, velocidade, resistências, recompensa e dica estratégica de cada inimigo |
+| 🏹 Torres | Imagem real da torre, nome, tipo de dano, alcance, custo base e poder do nível 3 |
+
+---
+
+## Stack Técnico
+
+| Tecnologia | Versão | Papel |
+|---|---|---|
+| Phaser | ^3.80.1 | Engine de jogo (render, input, cenas, animações) |
+| TypeScript | ^5.3.3 | Tipagem estática em toda a codebase |
+| Vite | ^5.0.12 | Bundler + HMR para dev rápido |
+| @supabase/supabase-js | ^2.39.3 | Client do leaderboard remoto |
+
+---
+
+## Diagrama de Fluxo de Cenas
 
 ```
-src/
-  config/     enemies.json, towers.json
-  entities/   Enemy, Tower, Projectile
-  events/     EventBus
-  factories/  EnemyFactory, TowerFactory
-  managers/   GameManager, WaveManager, EconomyManager, ProgressManager
-  patterns/   ITargetingStrategy + 3 implementacoes
-  scenes/     MenuScene, GameScene, GameOverScene, PauseScene, UpgradeScene
-  services/   SupabaseService
-  main.ts
+MenuScene
+  ├── [ Jogar ]          → GameScene (fase atual)
+  ├── [ Escolher Fase ]  → GameScene (fase escolhida)
+  ├── [ Melhorias ]      → UpgradeScene
+  └── [ Leaderboard ]    → overlay na própria MenuScene
+
+GameScene
+  ├── [ ESC / ⏸ ]       → PauseScene (GameScene pausada)
+  ├── [ Fase concluída ] → overlay inline
+  │     ├── [ Melhorias ]   → UpgradeScene
+  │     ├── [ Próxima Fase] → GameScene (fase+1)
+  │     └── [ Menu ]        → MenuScene
+  └── [ Vidas = 0 ]      → GameOverScene
+
+GameOverScene
+  ├── [ Tentar Novamente ] → GameScene (mesma fase)
+  ├── [ Ver Melhorias ]    → UpgradeScene (se tiver estrelas)
+  └── [ Menu Principal ]   → MenuScene
+
+UpgradeScene
+  ├── [ Iniciar Fase X ]   → GameScene
+  └── [ Menu ]             → MenuScene
 ```
-
----
-
-## Changelog - Alteracoes realizadas em 27/06/2026
-
-### Mudanca principal: Boss Final movido da Fase 1 para a Fase 4
-
-**Contexto:** O boss final (Super Orc / Troll) estava configurado para aparecer ao fim da Fase 1.
-Por solicitacao, ele foi movido para aparecer exclusivamente ao fim da Fase 4, a ultima e mais dificil fase,
-como inimigo solo (sem outros inimigos na mesma horda).
-
----
-
-#### Arquivo modificado: src/managers/WaveManager.ts
-
-Linha 49-56 - Condicao de geracao do boss:
-
-ANTES:
-  // Final boss at the end of Phase 1
-  if (phase === 1) { ... }
-
-DEPOIS:
-  // Final boss at the end of Phase 4 (the last phase) - appears alone
-  if (phase === 4) { ... }
-
-Efeito pratico:
-- Fase 1: passa a ter exatamente 5 hordas (antes eram 6, a ultima sendo o boss)
-- Fase 4: passa a ter 6 hordas, sendo a 6a e ultima composta exclusivamente pelo boss
-
-Nenhum outro parametro do boss foi alterado:
-- HP: 1200 (inalterado)
-- Velocidade: 30 (inalterada)
-- Resistencia fisica: 30% (inalterada)
-- Resistencia magica: 30% (inalterada)
-- Recompensa: 150 ouro (inalterada)
-- Escala visual: 0.18 (inalterada)
-- Sprites e animacoes: identicos
-
----
-
-#### Arquivo modificado: src/scenes/GameScene.ts
-
-Linha 862 - Codex de inimigos (texto descritivo):
-
-ANTES: 'O terrivel chefe da Fase 1!'
-DEPOIS: 'O terrivel chefe final - Fase 4!'
-
-O painel de informacoes do Codex agora exibe corretamente que o Super Orc e o boss da Fase 4.
-
----
-
-### Validacao e testes realizados
-
-1. Compilacao TypeScript (npx tsc --noEmit): SEM ERROS - projeto compila limpo apos as alteracoes
-2. Servidor de desenvolvimento (npm run dev): iniciado com sucesso em http://localhost:3000
-3. Revisao completa do codigo-fonte:
-   - WaveManager.ts - logica de geracao e spawning de hordas
-   - Enemy.ts - entidade de inimigo, stats, animacoes, sistema de dano
-   - GameScene.ts - cenas, mapas, HUD, Codex, popups de torres
-   - enemies.json - configuracao de stats de todos os inimigos
-   - towers.json - configuracao de torres e upgrades
-4. Verificacao de integridade: confirmado que o boss aparece sozinho (count: 1)
-   na horda adicional da Fase 4, sem mistura com outros tipos de inimigo.
-
----
-
-### Resumo do impacto por fase
-
-| Fase | Hordas (antes) | Hordas (depois) | Boss? |
-|------|----------------|-----------------|-------|
-| 1 | 6 (5 + boss) | 5 | Nao |
-| 2 | 5 | 5 | Nao |
-| 3 | 5 | 5 | Nao |
-| 4 | 5 | 6 (5 + boss) | Sim (Solo) |
