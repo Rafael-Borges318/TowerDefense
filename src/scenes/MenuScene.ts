@@ -7,6 +7,9 @@ export class MenuScene extends Phaser.Scene {
 
   preload() {
     this.load.image('telaInicial', '/assets/telaInicialPixel.jpeg')
+    this.load.image('torre_arqueiro', 'assets/torreArqueiro.png')
+    this.load.image('torre_mago',     'assets/torreMago.png')
+    this.load.image('torre_morteiro', 'assets/torreMorteiro.png')
   }
 
   create() {
@@ -131,20 +134,18 @@ export class MenuScene extends Phaser.Scene {
         })
       } else {
         const entries = [
-          { name: 'Arqueiro', color: '#D2691E', sq: 0xD2691E, lines: ['Dano: físico  |  Alcance: 130px', 'Dispara flechas numa unidade', 'Nv3: tiro triplo (3 alvos) ✨', 'Custo base: 80💰'] },
-          { name: 'Mago',     color: '#cc88ff', sq: 0xAA55EE, lines: ['Dano: mágico  |  Alcance: 120px', 'Ignora resist. física', 'Nv3: lentidão nas vítimas ✨', 'Custo base: 110💰'] },
-          { name: 'Morteiro', color: '#aaaaaa', sq: 0x888888, lines: ['Dano: físico AoE  |  Alcance: 150px', 'Atinge múltiplos inimigos', 'Nv3: explosão em grande área ✨', 'Custo base: 130💰'] },
+          { name: 'Arqueiro', color: '#D2691E', texKey: 'torre_arqueiro', lines: ['Dano: físico  |  Alcance: 130px', 'Dispara flechas numa unidade', 'Nv3: tiro triplo (3 alvos) ✨', 'Custo base: 80💰'] },
+          { name: 'Mago',     color: '#cc88ff', texKey: 'torre_mago',     lines: ['Dano: mágico  |  Alcance: 120px', 'Ignora resist. física', 'Nv3: lentidão nas vítimas ✨', 'Custo base: 110💰'] },
+          { name: 'Morteiro', color: '#aaaaaa', texKey: 'torre_morteiro', lines: ['Dano: físico AoE  |  Alcance: 150px', 'Atinge múltiplos inimigos', 'Nv3: explosão em grande área ✨', 'Custo base: 130💰'] },
         ]
         const col = [0, 1, 0]
         const row = [0, 0, 1]
-        entries.forEach(({ name, color, sq, lines }, i) => {
+        entries.forEach(({ name, color, texKey, lines }, i) => {
           const tx2 = px + 14 + col[i] * (colW + 20)
           const ty2 = cy2 + row[i] * 175
-          const sq2 = this.add.graphics()
-          sq2.fillStyle(sq, 1); sq2.fillRect(tx2 + 6, ty2 + 10, 20, 20)
-          sq2.lineStyle(1, 0xffffff, 0.2); sq2.strokeRect(tx2 + 6, ty2 + 10, 20, 20)
-          c.add(sq2)
-          c.add(this.add.text(tx2 + 36, ty2 + 10, name, { fontSize: '15px', color, fontStyle: 'bold' }))
+          const img = this.add.image(tx2 + 16, ty2 + 20, texKey).setDisplaySize(36, 36)
+          c.add(img)
+          c.add(this.add.text(tx2 + 42, ty2 + 10, name, { fontSize: '15px', color, fontStyle: 'bold' }))
           lines.forEach((line, j) => {
             c.add(this.add.text(tx2 + 14, ty2 + 34 + j * 19, `• ${line}`, { fontSize: '11px', color: '#99aacc' }))
           })
