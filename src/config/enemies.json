@@ -33,7 +33,7 @@
     "curseRange": 130
   },
   "boss": {
-    "health": 1200,
+    "health": 1800,
     "speed": 30,
     "reward": 150,
     "physicalResist": 30,

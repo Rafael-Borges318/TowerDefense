@@ -16,8 +16,6 @@ export class MenuScene extends BaseScene {
 
   preload() {
     this.load.image('telaInicial', '/assets/telaInicialPixel.jpeg')
-    this.load.spritesheet('orc_walk', 'assets/orc_walk.png', { frameWidth: 100, frameHeight: 100 })
-    this.load.image('boss_walk_0', 'assets/bossfinal/1_TROLL/Troll_01_1_WALK_000.png')
   }
 
   create() {
@@ -118,6 +116,7 @@ export class MenuScene extends BaseScene {
     }).setOrigin(1, 1).setInteractive({ cursor: 'pointer' })
     btn.on('pointerover', () => btn.setAlpha(0.8))
     btn.on('pointerout',  () => btn.setAlpha(1))
+
     btn.on('pointerdown', () => {
       if (codexCont) { codexCont.destroy(); return }
       openCodex('enemies')

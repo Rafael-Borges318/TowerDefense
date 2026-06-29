@@ -9,7 +9,7 @@ interface Point { x: number; y: number }
 interface HordeDef { enemies: { type: EnemyType; count: number }[]; interval: number; bonus: number }
 
 const HORDES_PER_PHASE = 5
-const HEALTH_SCALE_PER_HORDE = 0.05
+const HEALTH_SCALE_PER_HORDE = 0.08
 
 function generateHordes(phase: number): HordeDef[] {
   const count = HORDES_PER_PHASE
